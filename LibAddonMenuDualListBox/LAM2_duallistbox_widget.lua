@@ -117,6 +117,11 @@ local MIN_HEIGHT = 26
 local MAX_WIDTH = 0
 
 
+--LibShifterBox dependent variables
+local libShifterBoxPossibleEventNames = LSB ~= nil and LSB.allowedEventNames    --will be updated at EVENT_ADD_ON_LOADED again
+local libShifterBoxEventNameToId = {}                                           --will be updated at EVENT_ADD_ON_LOADED
+local myShifterBoxLocalEventFunctions = {}                                      --The table with the local event callback functions for each eventId. See function assignLocalCallbackFunctionsToEventNames
+
 ------------------------------------------------------------------------------------------------------------------------
 -- variables for LibShifterBox
 
@@ -148,6 +153,7 @@ local function getBoxName(shifterBox)
     return nil
 end
 
+
 local function checkAndGetShifterBoxNameAndData(shifterBox)
     if not shifterBox then return nil, nil end
     local boxName = shifterBox.boxName or getBoxName(shifterBox)
@@ -156,6 +162,7 @@ local function checkAndGetShifterBoxNameAndData(shifterBox)
     if not shifterBoxData then return nil, nil end
     return boxName, shifterBoxData
 end
+
 
 local function checkShifterBoxValid(customControl, shifterBoxSetupData, newBox)
     newBox = newBox or false
@@ -194,6 +201,7 @@ local function getLeftListEntriesFull(customControl)
     return shifterBox:GetLeftListEntriesFull()
 end
 
+
 local function getRightListEntriesFull(customControl)
     if not customControl then return end
     local shifterBox = customControl.dualListBoxData
@@ -213,6 +221,7 @@ local function checkAndUpdateRightListDefaultEntries(shifterBox, rightListEntrie
         end
     end
 end
+
 
 local function updateLibShifterBoxEntries(customControl, dualListBoxData, shifterBoxControl, isLeftList, newValues)
     local shifterBoxSetupData = dualListBoxData.setupData
@@ -260,6 +269,7 @@ local function updateLibShifterBoxEntries(customControl, dualListBoxData, shifte
     --checkAndUpdateRightListDefaultEntries(shifterBoxControl, rightListEntries, shifterBoxData)
 end
 
+
 local function updateLibShifterBoxEnabledState(customControl, shifterBoxControl, isEnabled)
     if not customControl then return end
     if not shifterBoxControl then return end
@@ -269,6 +279,7 @@ local function updateLibShifterBoxEnabledState(customControl, shifterBoxControl,
     shifterBoxControl:SetHidden(false)
     shifterBoxControl:SetEnabled(isEnabled)
 end
+
 
 local function UpdateDisabled(control)
     local disable = getDefaultValue(control.data.disabled)
@@ -282,11 +293,13 @@ local function UpdateDisabled(control)
     end
 end
 
+
 local function UpdateValue(control)
     if control.data.refreshFunc then
         control.data.refreshFunc(control)
     end
 end
+
 
 local function UpdateValues(control, isLeftList, newValues)
     local shifterBoxControl = control.dualListBox
@@ -299,9 +312,11 @@ local function UpdateValues(control, isLeftList, newValues)
     UpdateValue(control)
 end
 
+
 local function UpdateLeftListValues(control, values)
     UpdateValues(control, true, values)
 end
+
 
 local function UpdateRightListValues(control, values)
     UpdateValues(control, false, values)
@@ -310,124 +325,142 @@ end
 
 ------------------------------------------------------------------------------------------------------------------------
 -- LibShifterBox - Event callback functions
+local function assignLocalCallbackFunctionsToEventNames()
+    --Set the local event callback function for each event Id, inside table myShifterBoxLocalEventFunctions
+--[[
+    --At date: 2022-04-19
+    -->LibShifterBox possible event ID = event name constant (e.g. LibShifterBox.EVENT_ENTRY_HIGHLIGHTED
+    -->See table LibShifterBox.allowedEventNames
+    [1]  = "EVENT_ENTRY_HIGHLIGHTED",
+    [2]  = "EVENT_ENTRY_UNHIGHLIGHTED",
+    [3]  = "EVENT_ENTRY_MOVED",
+    [4]  = "EVENT_LEFT_LIST_CLEARED",
+    [5]  = "EVENT_RIGHT_LIST_CLEARED",
+    [6]  = "EVENT_LEFT_LIST_ENTRY_ADDED",
+    [7]  = "EVENT_RIGHT_LIST_ENTRY_ADDED",
+    [8]  = "EVENT_LEFT_LIST_ENTRY_REMOVED",
+    [9]  = "EVENT_RIGHT_LIST_ENTRY_REMOVED",
+    [10] = "EVENT_LEFT_LIST_CREATED",
+    [11] = "EVENT_RIGHT_LIST_CREATED",
+    [12] = "EVENT_LEFT_LIST_ROW_ON_MOUSE_ENTER",
+    [13] = "EVENT_RIGHT_LIST_ROW_ON_MOUSE_ENTER",
+    [14] = "EVENT_LEFT_LIST_ROW_ON_MOUSE_EXIT",
+    [15] = "EVENT_RIGHT_LIST_ROW_ON_MOUSE_EXIT",
+    [16] = "EVENT_LEFT_LIST_ROW_ON_MOUSE_UP",
+    [17] = "EVENT_RIGHT_LIST_ROW_ON_MOUSE_UP",
+    [18] = "EVENT_LEFT_LIST_ROW_ON_DRAG_START",
+    [19] = "EVENT_RIGHT_LIST_ROW_ON_DRAG_START",
+    [20] = "EVENT_LEFT_LIST_ROW_ON_DRAG_END",
+    [21] = "EVENT_RIGHT_LIST_ROW_ON_DRAG_END",
+]]
 
-local function myShifterBoxEventEntryMovedCallbackFunction(shifterBox, key, value, categoryId, isDestListLeftList)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData or not key then return end
-
-    --Moved to the left
-    if isDestListLeftList == true then
-        --local rightListEntries = shifterBox:GetRightListEntriesFull()
-        --checkAndUpdateRightListDefaultEntries(shifterBox, rightListEntries, shifterBoxData)
-
-    else
-        --Moved to the right? Save to SavedVariables with value true
+    myShifterBoxLocalEventFunctions[LSB.EVENT_ENTRY_HIGHLIGHTED] = function(selectedRow, shifterBox, key, value, categoryId, isLeftList)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData or not key then return end
 
     end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_ENTRY_UNHIGHLIGHTED] = function(selectedRow, shifterBox, key, value, categoryId, isLeftList)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData or not key then return end
+
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_ENTRY_MOVED] = function(shifterBox, key, value, categoryId, isToListLeftList, fromList, toList)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_CLEARED] = function(shifterBox)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_CLEARED] = function(shifterBox)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ENTRY_ADDED] = function(shifterBox, list, entryAdded)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ENTRY_ADDED] = function(shifterBox, list, entryAdded)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ENTRY_REMOVED] = function(shifterBox, list, entryRemoved)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ENTRY_REMOVED] = function(shifterBox, list, entryRemoved)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_CREATED] = function(leftListControl, shifterBox)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_CREATED] = function(rightListControl, shifterBox)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_ENTER] = function(rowControl, shifterBox, rawRowData)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_ENTER] = function(rowControl, shifterBox, rawRowData)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_EXIT] = function(rowControl, shifterBox, rawRowData)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_EXIT] = function(rowControl, shifterBox, rawRowData)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_UP] = function(rowControl, shifterBox, mouseButton, isInside, altKey, shiftKey, commandKey, rawRowData)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_UP] = function(rowControl, shifterBox, mouseButton, isInside, altKey, shiftKey, commandKey, rawRowData)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_START] = function(draggedControl, shifterBox, mouseButton, rawDraggedRowData)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ROW_ON_DRAG_START] = function(draggedControl, shifterBox, mouseButton, rawDraggedRowData)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_END] = function(draggedOnToControl, shifterBox, mouseButton, rawDraggedRowData, hasSameShifterBoxParent, wasDragSuccessful)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
+
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ROW_ON_DRAG_END] = function(draggedOnToControl, shifterBox, mouseButton, rawDraggedRowData, hasSameShifterBoxParent, wasDragSuccessful)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+    end
 end
-
-local function myShifterBoxEventEntryHighlightedCallbackFunction(selectedRow, shifterBox, key, value, categoryId, isLeftList)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData or not key then return end
-
-end
-
-local function myShifterBoxEventEntryUnHighlightedCallbackFunction(selectedRow, shifterBox, key, value, categoryId, isLeftList)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData or not key then return end
-
-end
-
-local function myShifterBoxEventLeftListCreatedCallbackFunction(leftListControl, shifterBox)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
-local function myShifterBoxEventRightListCreatedCallbackFunction(rightListControl, shifterBox)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
-local function myShifterBoxEventLeftListClearedCallbackFunction(shifterBox)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
-local function myShifterBoxEventRightListClearedCallbackFunction(shifterBox)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
-local function myShifterBoxEventLeftListEntryAddedCallbackFunction(shifterBox, list, entryAdded)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
-local function myShifterBoxEventRightListEntryAddedCallbackFunction(shifterBox, list, entryAdded)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
-local function myShifterBoxEventLeftListEntryCallbackRemovedFunction(shifterBox, list, entryRemoved)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
-local function myShifterBoxEventRightListEntryCallbackRemovedFunction(shifterBox, list, entryRemoved)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
-local function myShifterBoxEventLeftListRowMouseEnterCallbackFunction(rowControl, shifterBox, rawRowData)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
-local function myShifterBoxEventRightListRowMouseEnterCallbackFunction(rowControl, shifterBox, rawRowData)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
-local function myShifterBoxEventLeftListRowMouseExitCallbackFunction(rowControl, shifterBox, rawRowData)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
-local function myShifterBoxEventRightListRowMouseExitCallbackFunction(rowControl, shifterBox, rawRowData)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
-local function myShifterBoxEventLeftListRowMouseUpCallbackFunction(rowControl, shifterBox, mouseButton, isInside, altKey, shiftKey, commandKey, rawRowData)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
-local function myShifterBoxEventRightListRowMouseUpCallbackFunction(rowControl, shifterBox, mouseButton, isInside, altKey, shiftKey, commandKey, rawRowData)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
-local function myShifterBoxEventLeftListRowDragStartCallbackFunction(draggedControl, shifterBox, mouseButton, rawDraggedRowData)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
-local function myShifterBoxEventRightListRowDragStartCallbackFunction(draggedControl, shifterBox, mouseButton, rawDraggedRowData)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
-local function myShifterBoxEventLeftListRowDragEndCallbackFunction(draggedOnToControl, shifterBox, mouseButton, rawDraggedRowData, hasSameShifterBoxParent, wasDragSuccessful)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
-local function myShifterBoxEventRightListRowDragEndCallbackFunction(draggedOnToControl, shifterBox, mouseButton, rawDraggedRowData, hasSameShifterBoxParent, wasDragSuccessful)
-    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-    if not boxName or not shifterBoxData then return end
-end
-
 
 
 local function updateLibShifterBoxEventCallbacks(customControl, dualListBoxData, shifterBoxControl, alreadyChecked)
@@ -444,132 +477,153 @@ local function updateLibShifterBoxEventCallbacks(customControl, dualListBoxData,
         shifterBoxControl.LAMduallistBox_EventCallbacks = {}
         local LAMduallistBox_EventCallbacks = shifterBoxControl.LAMduallistBox_EventCallbacks
 
-        --Add the callback as he left list was created
-        if callbackRegister.EVENT_LEFT_LIST_CREATED then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_CREATED,             myShifterBoxEventLeftListCreatedCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_CREATED] =                myShifterBoxEventLeftListCreatedCallbackFunction
+        --Dynamic
+        --Enable the callback functions if they are added to the customSettings of the LibShifterBox
+        for eventId, eventName in ipairs(libShifterBoxPossibleEventNames) do
+            if callbackRegister[eventId] ~= nil then
+                local callbackFuncForEventName = myShifterBoxLocalEventFunctions[eventId]
+                if callbackFuncForEventName ~= nil then
+                    shifterBoxControl:RegisterCallback(eventId, callbackFuncForEventName)
+                    --Better readability at the control
+                    LAMduallistBox_EventCallbacks[eventId] = {
+                        eventId =   eventId,
+                        eventName = eventName,
+                        callback =  callbackFuncForEventName
+                    }
+                end
+            end
         end
 
-        --Add the callback as he left list was created
-        if callbackRegister.EVENT_RIGHT_LIST_CREATED then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_CREATED,            myShifterBoxEventRightListCreatedCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_RIGHT_LIST_CREATED] =               myShifterBoxEventRightListCreatedCallbackFunction
-        end
+        --[[
+            --Old
+            ---Hardcoded
+            --Add the callback as he left list was created
+            if callbackRegister.LSB.EVENT_LEFT_LIST_CREATED then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_CREATED,             myShifterBoxEventLeftListCreatedCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_CREATED] =                myShifterBoxEventLeftListCreatedCallbackFunction
+            end
 
-        --Add the callback as an entry was moved
-        if callbackRegister.EVENT_ENTRY_MOVED then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_ENTRY_MOVED,                   myShifterBoxEventEntryMovedCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_ENTRY_MOVED] =                      myShifterBoxEventEntryMovedCallbackFunction
-        end
+            --Add the callback as he left list was created
+            if callbackRegister.LSB.EVENT_RIGHT_LIST_CREATED then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_CREATED,            myShifterBoxEventRightListCreatedCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_RIGHT_LIST_CREATED] =               myShifterBoxEventRightListCreatedCallbackFunction
+            end
 
-        --Add the callback as an entry was highlighted at the left side
-        if callbackRegister.EVENT_ENTRY_HIGHLIGHTED then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_ENTRY_HIGHLIGHTED,             myShifterBoxEventEntryHighlightedCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_ENTRY_HIGHLIGHTED] =                myShifterBoxEventEntryHighlightedCallbackFunction
-        end
+            --Add the callback as an entry was moved
+            if callbackRegister.LSB.EVENT_ENTRY_MOVED then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_ENTRY_MOVED,                   myShifterBoxEventEntryMovedCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_ENTRY_MOVED] =                      myShifterBoxEventEntryMovedCallbackFunction
+            end
 
-        --Add the callback as an entry was unhighlighted again at the left side
-        if callbackRegister.EVENT_ENTRY_UNHIGHLIGHTED then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_ENTRY_UNHIGHLIGHTED,           myShifterBoxEventEntryUnHighlightedCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_ENTRY_UNHIGHLIGHTED] =              myShifterBoxEventEntryUnHighlightedCallbackFunction
-        end
+            --Add the callback as an entry was highlighted at the left side
+            if callbackRegister.LSB.EVENT_ENTRY_HIGHLIGHTED then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_ENTRY_HIGHLIGHTED,             myShifterBoxEventEntryHighlightedCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_ENTRY_HIGHLIGHTED] =                myShifterBoxEventEntryHighlightedCallbackFunction
+            end
 
-        --Add the callback as the left list was cleared
-        if callbackRegister.EVENT_LEFT_LIST_CLEARED then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_CLEARED,             myShifterBoxEventLeftListClearedCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_CLEARED] =                myShifterBoxEventLeftListClearedCallbackFunction
-        end
+            --Add the callback as an entry was unhighlighted again at the left side
+            if callbackRegister.LSB.EVENT_ENTRY_UNHIGHLIGHTED then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_ENTRY_UNHIGHLIGHTED,           myShifterBoxEventEntryUnHighlightedCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_ENTRY_UNHIGHLIGHTED] =              myShifterBoxEventEntryUnHighlightedCallbackFunction
+            end
 
-        --Add the callback as the right list was cleared
-        if callbackRegister.EVENT_RIGHT_LIST_CLEARED then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_CLEARED,            myShifterBoxEventRightListClearedCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_RIGHT_LIST_CLEARED] =               myShifterBoxEventRightListClearedCallbackFunction
-        end
+            --Add the callback as the left list was cleared
+            if callbackRegister.LSB.EVENT_LEFT_LIST_CLEARED then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_CLEARED,             myShifterBoxEventLeftListClearedCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_CLEARED] =                myShifterBoxEventLeftListClearedCallbackFunction
+            end
 
-        --Add the callback as the left list got a new added entry
-        if callbackRegister.EVENT_LEFT_LIST_ENTRY_ADDED then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ENTRY_ADDED,         myShifterBoxEventLeftListEntryAddedCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ENTRY_ADDED] =            myShifterBoxEventLeftListEntryAddedCallbackFunction
-        end
+            --Add the callback as the right list was cleared
+            if callbackRegister.LSB.EVENT_RIGHT_LIST_CLEARED then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_CLEARED,            myShifterBoxEventRightListClearedCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_RIGHT_LIST_CLEARED] =               myShifterBoxEventRightListClearedCallbackFunction
+            end
 
-        --Add the callback as the left list got a new added entry
-        if callbackRegister.EVENT_RIGHT_LIST_ENTRY_ADDED then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ENTRY_ADDED,        myShifterBoxEventRightListEntryAddedCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ENTRY_ADDED] =            myShifterBoxEventRightListEntryAddedCallbackFunction
-        end
+            --Add the callback as the left list got a new added entry
+            if callbackRegister.LSB.EVENT_LEFT_LIST_ENTRY_ADDED then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ENTRY_ADDED,         myShifterBoxEventLeftListEntryAddedCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ENTRY_ADDED] =            myShifterBoxEventLeftListEntryAddedCallbackFunction
+            end
 
-        --Add the callback as the left list got a new added entry
-        if callbackRegister.EVENT_LEFT_LIST_ENTRY_REMOVED then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ENTRY_REMOVED,       myShifterBoxEventLeftListEntryCallbackRemovedFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ENTRY_REMOVED] =          myShifterBoxEventLeftListEntryCallbackRemovedFunction
-        end
+            --Add the callback as the left list got a new added entry
+            if callbackRegister.LSB.EVENT_RIGHT_LIST_ENTRY_ADDED then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ENTRY_ADDED,        myShifterBoxEventRightListEntryAddedCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ENTRY_ADDED] =            myShifterBoxEventRightListEntryAddedCallbackFunction
+            end
 
-        --Add the callback as the left list got a new added entry
-        if callbackRegister.EVENT_RIGHT_LIST_ENTRY_REMOVED then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ENTRY_REMOVED,      myShifterBoxEventRightListEntryCallbackRemovedFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_RIGHT_LIST_ENTRY_REMOVED] =         myShifterBoxEventRightListEntryCallbackRemovedFunction
-        end
+            --Add the callback as the left list got a new added entry
+            if callbackRegister.LSB.EVENT_LEFT_LIST_ENTRY_REMOVED then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ENTRY_REMOVED,       myShifterBoxEventLeftListEntryCallbackRemovedFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ENTRY_REMOVED] =          myShifterBoxEventLeftListEntryCallbackRemovedFunction
+            end
+
+            --Add the callback as the left list got a new added entry
+            if callbackRegister.LSB.EVENT_RIGHT_LIST_ENTRY_REMOVED then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ENTRY_REMOVED,      myShifterBoxEventRightListEntryCallbackRemovedFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_RIGHT_LIST_ENTRY_REMOVED] =         myShifterBoxEventRightListEntryCallbackRemovedFunction
+            end
 
 
-        --Add the callback as the left row's OnMouseEnter fires
-        if callbackRegister.EVENT_LEFT_LIST_ROW_ON_MOUSE_ENTER then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_ENTER,  myShifterBoxEventLeftListRowMouseEnterCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_ENTER] =     myShifterBoxEventLeftListRowMouseEnterCallbackFunction
-        end
+            --Add the callback as the left row's OnMouseEnter fires
+            if callbackRegister.LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_ENTER then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_ENTER,  myShifterBoxEventLeftListRowMouseEnterCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_ENTER] =     myShifterBoxEventLeftListRowMouseEnterCallbackFunction
+            end
 
-        --Add the callback as the right row's OnMouseEnter fires
-        if callbackRegister.EVENT_RIGHT_LIST_ROW_ON_MOUSE_ENTER then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_ENTER, myShifterBoxEventRightListRowMouseEnterCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_ENTER] =    myShifterBoxEventRightListRowMouseEnterCallbackFunction
-        end
+            --Add the callback as the right row's OnMouseEnter fires
+            if callbackRegister.LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_ENTER then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_ENTER, myShifterBoxEventRightListRowMouseEnterCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_ENTER] =    myShifterBoxEventRightListRowMouseEnterCallbackFunction
+            end
 
-        --Add the callback as the left row's OnMouseExit fires
-        if callbackRegister.EVENT_LEFT_LIST_ROW_ON_MOUSE_EXIT then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_EXIT,   myShifterBoxEventLeftListRowMouseExitCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_EXIT] =      myShifterBoxEventLeftListRowMouseExitCallbackFunction
-        end
+            --Add the callback as the left row's OnMouseExit fires
+            if callbackRegister.LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_EXIT then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_EXIT,   myShifterBoxEventLeftListRowMouseExitCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_EXIT] =      myShifterBoxEventLeftListRowMouseExitCallbackFunction
+            end
 
-        --Add the callback as the right row's OnMouseExit fires
-        if callbackRegister.EVENT_RIGHT_LIST_ROW_ON_MOUSE_EXIT then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_EXIT,  myShifterBoxEventRightListRowMouseExitCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_EXIT] =     myShifterBoxEventRightListRowMouseExitCallbackFunction
-        end
+            --Add the callback as the right row's OnMouseExit fires
+            if callbackRegister.LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_EXIT then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_EXIT,  myShifterBoxEventRightListRowMouseExitCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_EXIT] =     myShifterBoxEventRightListRowMouseExitCallbackFunction
+            end
 
-        --Add the callback as the left row's OnMouseUp fires
-        if callbackRegister.EVENT_LEFT_LIST_ROW_ON_MOUSE_UP then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_UP,     myShifterBoxEventLeftListRowMouseUpCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_UP] =        myShifterBoxEventLeftListRowMouseUpCallbackFunction
-        end
+            --Add the callback as the left row's OnMouseUp fires
+            if callbackRegister.LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_UP then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_UP,     myShifterBoxEventLeftListRowMouseUpCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_UP] =        myShifterBoxEventLeftListRowMouseUpCallbackFunction
+            end
 
-        --Add the callback as the rightrow's OnMouseUp fires
-        if callbackRegister.EVENT_RIGHT_LIST_ROW_ON_MOUSE_UP then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_UP,    myShifterBoxEventRightListRowMouseUpCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_UP] =       myShifterBoxEventRightListRowMouseUpCallbackFunction
-        end
+            --Add the callback as the rightrow's OnMouseUp fires
+            if callbackRegister.LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_UP then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_UP,    myShifterBoxEventRightListRowMouseUpCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_UP] =       myShifterBoxEventRightListRowMouseUpCallbackFunction
+            end
 
-        --Add the callback as the left row's OnDragStart fires
-        if callbackRegister.EVENT_LEFT_LIST_ROW_ON_DRAG_START then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_START,   myShifterBoxEventLeftListRowDragStartCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_START] =      myShifterBoxEventLeftListRowDragStartCallbackFunction
-        end
+            --Add the callback as the left row's OnDragStart fires
+            if callbackRegister.LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_START then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_START,   myShifterBoxEventLeftListRowDragStartCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_START] =      myShifterBoxEventLeftListRowDragStartCallbackFunction
+            end
 
-        --Add the callback as the right row's OnDragStart fires
-        if callbackRegister.EVENT_RIGHT_LIST_ROW_ON_DRAG_START then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_START,   myShifterBoxEventRightListRowDragStartCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_START] =      myShifterBoxEventRightListRowDragStartCallbackFunction
-        end
+            --Add the callback as the right row's OnDragStart fires
+            if callbackRegister.LSB.EVENT_RIGHT_LIST_ROW_ON_DRAG_START then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_START,   myShifterBoxEventRightListRowDragStartCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_START] =      myShifterBoxEventRightListRowDragStartCallbackFunction
+            end
 
-        --Add the callback as the left row's OnDragEnd fires
-        if callbackRegister.EVENT_LEFT_LIST_ROW_ON_DRAG_END then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_END,     myShifterBoxEventLeftListRowDragEndCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_END] =        myShifterBoxEventLeftListRowDragEndCallbackFunction
-        end
+            --Add the callback as the left row's OnDragEnd fires
+            if callbackRegister.LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_END then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_END,     myShifterBoxEventLeftListRowDragEndCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_END] =        myShifterBoxEventLeftListRowDragEndCallbackFunction
+            end
 
-        --Add the callback as the right row's OnDragEnd fires
-        if callbackRegister.EVENT_RIGHT_LIST_ROW_ON_DRAG_END then
-            shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ROW_ON_DRAG_END,    myShifterBoxEventRightListRowDragEndCallbackFunction)
-            LAMduallistBox_EventCallbacks[LSB.EVENT_RIGHT_LIST_ROW_ON_DRAG_END] =       myShifterBoxEventRightListRowDragEndCallbackFunction
-        end
+            --Add the callback as the right row's OnDragEnd fires
+            if callbackRegister.LSB.EVENT_RIGHT_LIST_ROW_ON_DRAG_END then
+                shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ROW_ON_DRAG_END,    myShifterBoxEventRightListRowDragEndCallbackFunction)
+                LAMduallistBox_EventCallbacks[LSB.EVENT_RIGHT_LIST_ROW_ON_DRAG_END] =       myShifterBoxEventRightListRowDragEndCallbackFunction
+            end
+        ]]
     end
 end
 
@@ -749,8 +803,17 @@ local function registerWidget(eventId, addonName)
     if addonName ~= widgetName then return end
     em:UnregisterForEvent(eventAddOnLoadedForWidgetName, EVENT_ADD_ON_LOADED)
 
+    --LibShifterBox
     LSB = LibShifterBox
     if not LSB then return end
+
+    --Update the LibShifterBox EVENT_* callback names which are possible with their ID number (lookup table)
+    libShifterBoxPossibleEventNames = LSB.allowedEventNames
+    for eventId, eventName in ipairs(libShifterBoxPossibleEventNames) do
+        libShifterBoxEventNameToId[eventName] = eventId
+    end
+    --Assign the local callback functions to the eventNames, inside table myShifterBoxLocalEventFunctions
+    assignLocalCallbackFunctionsToEventNames()
 
     if not LAM:RegisterWidget("soundslider", widgetVersion) then return end
 end
