@@ -11,8 +11,9 @@
     setupData = {
         --The overall dual list box control setup data
         name = "LAM_DUALLISTBOX_EXAMPLE1",
-        width       = 580, --number or function returning a number for the width of both list boxes together. If > the width of the LAM control container then the width willbe the LAM control container's width.
-        height      = 200, --number or function returning a number for the height of both list boxes together. minHeight of the LAM control needs to be >= this value! If > maxHeight then maxHeight of the LAM contro will be used
+        width       = 580,      --number or function returning a number for the width of both list boxes together. If > the width of the LAM control container then the width willbe the LAM control container's width.
+        height      = 200,      --number or function returning a number for the height of both list boxes together. minHeight of the LAM control needs to be >= this value! If > maxHeight then maxHeight of the LAM contro will be used
+        disabled    = false,    --boolean value or function returning a boolean to tell if the dual list box widget is disabled (default = false)? (optional)
 
 --======================================================================================================================
     ----  -v- The custom settings for the dual lists                                                            -v-
@@ -21,7 +22,6 @@
         -->The custom settings are defined via the library LibShifterBox. You can find the documentation here:
         -->https://github.com/klingo/ESO-LibShifterBox#api-reference    Search for "customSettings"
         customSettings = {
-            enabled = true,             -- boolean value or function returning a boolean to tell if the dual list box widget is enabled (default = true)? (optional)
             showMoveAllButtons = true,  -- the >> and << buttons to move all entries can be hidden if set to false (default = true). (optional)
             dragDropEnabled = true,     -- entries can be moved between lsit with drag-and-drop (default = true). (optional)
             sortEnabled = true,         -- sorting of the entries can be disabled (default = true). (optional)
@@ -112,12 +112,6 @@ local strformat = string.format
 
 if not LAM:RegisterWidget("duallistbox", widgetVersion) then return end
 
-
-local function UpdateValue(control)
-    if control.data.refreshFunc then
-        control.data.refreshFunc(control)
-    end
-end
 
 local MIN_HEIGHT = 26
 local MAX_WIDTH = 0
@@ -214,6 +208,99 @@ local function checkAndUpdateRightListDefaultEntries(shifterBox, rightListEntrie
             shifterBox:MoveEntriesToRightList(defaultRightListKeys)
         end
     end
+end
+
+local function updateLibShifterBoxEntries(customControl, dualListBoxData, shifterBoxControl, isLeftList, newValues)
+    local shifterBoxSetupData = dualListBoxData.setupData
+    if not checkShifterBoxValid(customControl, shifterBoxSetupData, false) then return end
+
+    isLeftList = isLeftList or false
+    local boxName = shifterBoxSetupData.name
+    local shifterBoxData = libShifterBoxes[boxName]
+    shifterBoxSetupData = shifterBoxSetupData or shifterBoxData.shifterBoxSetupData
+    if not shifterBoxSetupData then return end
+    shifterBoxControl = shifterBoxControl or shifterBoxData.shifterBoxControl
+    if not shifterBoxControl then return end
+
+    --Force defaults?
+    local forceDefaults = (newValues == nil and true) or false
+    local leftListEntries, rightListEntries
+
+    --Use default left list entries or nothing provided?
+    if forceDefaults == true then
+        if isLeftList == true and shifterBoxSetupData.leftListDefaultKeys ~= nil then
+            leftListEntries = getDefaultValue(shifterBoxSetupData.leftListDefaultKeys)
+            leftListEntries = leftListEntries or {}
+
+        elseif not isLeftList and shifterBoxSetupData.rightListDefaultKeys ~= nil then
+            rightListEntries = getDefaultValue(shifterBoxSetupData.rightListDefaultKeys)
+            rightListEntries = rightListEntries or {}
+        end
+    else
+        if isLeftList == true then
+            leftListEntries = newValues
+        else
+            rightListEntries = newValues
+        end
+    end
+
+    --Update the lists visually now
+    if isLeftList == true then
+        shifterBoxControl:ClearLeftList()
+        shifterBoxControl:AddEntriesToLeftList(leftListEntries)
+    else
+        shifterBoxControl:ClearRightList()
+        shifterBoxControl:AddEntriesToRightList(rightListEntries)
+    end
+    --Check for empty right list? fill up with default values again
+    --checkAndUpdateRightListDefaultEntries(shifterBoxControl, rightListEntries, shifterBoxData)
+end
+
+local function updateLibShifterBoxEnabledState(customControl, shifterBoxControl, isEnabled)
+    if not customControl then return end
+    if not shifterBoxControl then return end
+
+    customControl:SetHidden(false)
+    customControl:SetMouseEnabled(isEnabled)
+    shifterBoxControl:SetHidden(false)
+    shifterBoxControl:SetEnabled(isEnabled)
+end
+
+local function UpdateDisabled(control)
+    local disable = getDefaultValue(control.data.disabled)
+    if disable == true then
+        control.label:SetColor(ZO_DEFAULT_DISABLED_COLOR:UnpackRGBA())
+    else
+        control.label:SetColor(ZO_DEFAULT_ENABLED_COLOR:UnpackRGBA())
+    end
+    if control.dualListBox ~= nil then
+        updateLibShifterBoxEnabledState(control, control.dualListBox, not disable)
+    end
+end
+
+local function UpdateValue(control)
+    if control.data.refreshFunc then
+        control.data.refreshFunc(control)
+    end
+end
+
+local function UpdateValues(control, isLeftList, newValues)
+    local shifterBoxControl = control.dualListBox
+    if not shifterBoxControl then return false end
+
+    local newValuesTable = newValues ~= nil and getDefaultValue(newValues)
+
+    --customControl, dualListBoxData, shifterBoxControl, isLeftList, newValues
+    updateLibShifterBoxEntries(control, control.data, shifterBoxControl, isLeftList, newValuesTable)
+    UpdateValue(control)
+end
+
+local function UpdateLeftListValues(control, values)
+    UpdateValues(control, true, values)
+end
+
+local function UpdateRightListValues(control, values)
+    UpdateValues(control, false, values)
 end
 
 
@@ -337,63 +424,6 @@ local function myShifterBoxEventRightListRowDragEndCallbackFunction(draggedOnToC
     if not boxName or not shifterBoxData then return end
 end
 
-
-------------------------------------------------------------------------------------------------------------------------
-local function updateLibShifterBoxEntries(customControl, dualListBoxData, shifterBoxControl)
-    local shifterBoxSetupData = dualListBoxData.setupData
-    if not checkShifterBoxValid(customControl, shifterBoxSetupData, false) then return end
-
-    local boxName = shifterBoxSetupData.name
-    local shifterBoxData = libShifterBoxes[boxName]
-    shifterBoxSetupData = shifterBoxSetupData or shifterBoxData.shifterBoxSetupData
-    if not shifterBoxSetupData then return end
-    shifterBoxControl = shifterBoxControl or shifterBoxData.shifterBoxControl
-    if not shifterBoxControl then return end
-
-    --Use default left list entries or nothing provided?
-    if shifterBoxSetupData.leftListDefaultKeys == nil then
-        --todo We need a function here that provides the leftList entries?
-        -->simply use shifterBoxSetupData.leftListDefaultKeys!
-        local leftListEntries = {}
-
-        shifterBoxControl:ClearLeftList()
-        shifterBoxControl:AddEntriesToLeftList(leftListEntries)
-    end
-
-    if shifterBoxSetupData.rightListDefaultKeys == nil then
-        --todo We need a function here that provides the rightList entries?
-        -->simply use shifterBoxSetupData.rightListDefaultKeys!
-        local rightListEntries = {}
-
-        shifterBoxControl:ClearRightList()
-        shifterBoxControl:AddEntriesToRightList(rightListEntries)
-    end
-
-    --Check for empty right list? fill up with default values again
-    --checkAndUpdateRightListDefaultEntries(shifterBoxControl, rightListEntries, shifterBoxData)
-end
-
-
-local function updateLibShifterBoxState(customControl, dualListBoxData, shifterBoxControl, alreadyChecked)
-    alreadyChecked = alreadyChecked or false
-    local shifterBoxSetupData = dualListBoxData.setupData
-    if alreadyChecked == false and not checkShifterBoxValid(customControl, shifterBoxSetupData, false) then return end
-
-    local boxName = shifterBoxSetupData.name
-    local shifterBoxData = libShifterBoxes[boxName]
-    shifterBoxSetupData = shifterBoxSetupData or shifterBoxData.shifterBoxSetupData
-    if not shifterBoxSetupData then return end
-    shifterBoxControl = shifterBoxControl or shifterBoxData.shifterBoxControl
-    if not shifterBoxControl then return end
-
-    local isEnabled = shifterBoxSetupData.enabled ~= nil and getDefaultValue(shifterBoxSetupData.enabled)
-    if isEnabled == nil then isEnabled = true end
-
-    customControl:SetHidden(false)
-    customControl:SetMouseEnabled(isEnabled)
-    shifterBoxControl:SetHidden(false)
-    shifterBoxControl:SetEnabled(isEnabled)
-end
 
 
 local function updateLibShifterBoxEventCallbacks(customControl, dualListBoxData, shifterBoxControl, alreadyChecked)
@@ -540,6 +570,27 @@ local function updateLibShifterBoxEventCallbacks(customControl, dualListBoxData,
 end
 
 
+------------------------------------------------------------------------------------------------------------------------
+
+local function updateLibShifterBoxState(customControl, dualListBoxData, shifterBoxControl, alreadyChecked)
+    alreadyChecked = alreadyChecked or false
+    local shifterBoxSetupData = dualListBoxData.setupData
+    if alreadyChecked == false and not checkShifterBoxValid(customControl, shifterBoxSetupData, false) then return end
+
+    local boxName = shifterBoxSetupData.name
+    local shifterBoxData = libShifterBoxes[boxName]
+    shifterBoxSetupData = shifterBoxSetupData or shifterBoxData.shifterBoxSetupData
+    if not shifterBoxSetupData then return end
+    shifterBoxControl = shifterBoxControl or shifterBoxData.shifterBoxControl
+    if not shifterBoxControl then return end
+
+    local isEnabled = shifterBoxSetupData.enabled ~= nil and getDefaultValue(shifterBoxSetupData.enabled)
+    if isEnabled == nil then isEnabled = true end
+
+    updateLibShifterBoxEnabledState(customControl, shifterBoxControl, isEnabled)
+end
+
+
 local function updateLibShifterBox(customControl, dualListBoxData, shifterBoxControl)
     local shifterBoxSetupData = dualListBoxData.setupData
     if not checkShifterBoxValid(customControl, shifterBoxSetupData, false) then return end
@@ -571,7 +622,7 @@ local function updateLibShifterBox(customControl, dualListBoxData, shifterBoxCon
     updateLibShifterBoxEventCallbacks(customControl, dualListBoxData, shifterBoxControl, true)
 
     --Update the enabled state of the shifter box
-    updateLibShifterBoxState(customControl, dualListBoxData, shifterBoxControl, true)
+    --updateLibShifterBoxState(customControl, dualListBoxData, shifterBoxControl, true)
 end
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -640,6 +691,7 @@ end
 
 function LAMCreateControl.duallistbox(parent, dualListBoxData, controlName)
     if dualListBoxData.listsSetup == nil then return end
+    dualListBoxData.disabled = dualListBoxData.disabled or false
 
     local control = LAM.util.CreateBaseControl(parent, dualListBoxData, controlName)
     local width = control:GetWidth()
@@ -656,8 +708,6 @@ function LAMCreateControl.duallistbox(parent, dualListBoxData, controlName)
     end
     MAX_WIDTH = control:GetWidth()
 
-    control.UpdateValue = UpdateValue
-
     --Create the LibShifterBox dual list boxes (left and right)
     local dualListBoxControl = createFunc(parent, control, dualListBoxData)
     if dualListBoxControl == nil then
@@ -667,6 +717,16 @@ function LAMCreateControl.duallistbox(parent, dualListBoxData, controlName)
     control.dualListBox = dualListBoxControl
 
     LAM.util.RegisterForRefreshIfNeeded(control)
+
+    control.UpdateValue = UpdateValue
+    --Left list/right list entries handling
+    --customControl, values (table)
+    control.UpdateLeftListValues =  UpdateLeftListValues
+    control.UpdateRightListValues = UpdateRightListValues
+
+    --Disabled state handling
+    control.UpdateDisabled =        UpdateDisabled
+    control:UpdateDisabled()
 
     return control
 end
