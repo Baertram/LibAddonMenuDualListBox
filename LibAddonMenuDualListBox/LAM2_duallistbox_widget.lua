@@ -5,68 +5,61 @@
     width = "full", -- or "half" (optional)
     minHeight = function() return db.minHeightNumber end, --or number for the minimum height of this control. Default: 26 (optional)
     maxHeight = function() return db.maxHeightNumber end, --or number for the maximum height of this control. Default: 4 * minHeight (optional)
-    --The dual lists setup data
+--======================================================================================================================
+    -- -v- The dual lists setup data                                                                                -v-
+--======================================================================================================================
     setupData = {
         --The overall dual list box control setup data
         name = "LAM_DUALLISTBOX_EXAMPLE1",
-        width       = 580, --the width of both list boxes together
-        height      = 200, --the height of both list boxes together. minHeight of the LAm control needs to be >= this value!
+        width       = 580, --number of function returning a number for the width of both list boxes together
+        height      = 200, --number of function returning a number for the height of both list boxes together. minHeight of the LAM control needs to be >= this value!
 
+--======================================================================================================================
+    ----  -v- The custom settings for the dual lists                                                            -v-
+--======================================================================================================================
         --The setup data for the lists
         -->The custom settings are defined via the library LibShifterBox. You can find the documentation here:
         -->https://github.com/klingo/ESO-LibShifterBox#api-reference    Search for "customSettings"
         customSettings = {
-            showMoveAllButtons = true,  -- the >> and << buttons to move all entries can be hidden if set to false
-            dragDropEnabled = true,     -- entries can be moved between lsit with drag-and-drop
-            sortEnabled = true,         -- sorting of the entries can be disabled
-            sortBy = "value",           -- sort the list by value or key (allowed are: "value" or "key")
+            enabled = true,             -- boolean value or function returning a boolean to tell if the dual list box widget is enabled (default = true)? (optional)
+            showMoveAllButtons = true,  -- the >> and << buttons to move all entries can be hidden if set to false (default = true). (optional)
+            dragDropEnabled = true,     -- entries can be moved between lsit with drag-and-drop (default = true). (optional)
+            sortEnabled = true,         -- sorting of the entries can be disabled (default = true). (optional)
+            sortBy = "value",           -- sort the list by value or key (allowed are: "value" or "key")  (default = "value"). (optional)
 
+--======================================================================================================================
             leftList = {                -- list-specific settings that apply to the LEFT list
-                title = "",                                         -- the title/header of the list
-                rowHeight = 32,                                     -- the height of an individual row/entry
-                rowTemplateName = "ShifterBoxEntryTemplate",        -- an individual XML (cirtual) control can be provided for the rows/entries
-                emptyListText = GetString(LIBSHIFTERBOX_EMPTY),     -- the text to be displayed if there are no entries left in the list
-                fontSize = 18,                                      -- size of the font
-                rowDataTypeSelectSound = SOUNDS.ABILITY_SLOTTED,    -- an optional sound to play when a row of this data type is selected
-                rowOnMouseRightClick = function(rowControl, data)   -- an optional callback function when a right-click is done inside a row element (e.g. for custom context menus)
+                title = "",                                         -- the title/header of the list (default = ""). (optional)
+                rowHeight = 32,                                     -- the height of an individual row/entry (default = 32). (optional)
+                rowTemplateName = "ShifterBoxEntryTemplate",        -- an individual XML (cirtual) control can be provided for the rows/entries (default = "ShifterBoxEntryTemplate"). (optional)
+                emptyListText = GetString(LIBSHIFTERBOX_EMPTY),     -- the text to be displayed if there are no entries left in the list (default = GetString(LIBSHIFTERBOX_EMPTY)). (optional)
+                fontSize = 18,                                      -- size of the font (default = 18). (optional)
+                rowDataTypeSelectSound = SOUNDS.ABILITY_SLOTTED,    -- an optional sound to play when a row of this data type is selected (default = SOUNDS.ABILITY_SLOTTED). (optional)
+                rowOnMouseRightClick = function(rowControl, data)   -- an optional callback function when a right-click is done inside a row element (e.g. for custom context menus) (optional)
                     d("LSB: OnMouseRightClick: "..tostring(data.tooltipText))   -- reading custom 'tooltipText' from 'rowSetupAdditionalDataCallback'
                 end,
-                rowSetupCallback = function(rowControl, data)       -- function that will be called when a control of this type becomes visible
+                rowSetupCallback = function(rowControl, data)       -- function that will be called when a control of this type becomes visible (optional)
                     d("LSB: RowSetupCallback")                      -- Calls self:SetupRowEntry, then this function, finally ZO_SortFilterList.SetupRow
                 end,
-                rowSetupAdditionalDataCallback = function(rowControl, data) -- data can be extended with additional data during the 'rowSetupCallback'
+                rowSetupAdditionalDataCallback = function(rowControl, data) -- an optional function to extended data table of the row with additional data during the 'rowSetupCallback' (optional)
                     d("LSB: SetupAdditionalDataCallback")
                     data.tooltipText = data.value
                     return rowControl, data                         -- this callback function must return the rowControl and (enriched) data again
                 end,
-                rowResetControlCallback = function()                -- an optional callback when the datatype control gets reset
+                rowResetControlCallback = function()                -- an optional callback function when the datatype control gets reset (optional)
                     d("LSB: RowResetControlCallback")
                 end,
             },
 
+--======================================================================================================================
             rightList = {               -- list-specific settings that apply to the RIGHT list
-                title = "",                                         -- the title/header of the list
-                rowHeight = 32,                                     -- the height of an individual row/entry
-                rowTemplateName = "ShifterBoxEntryTemplate",        -- an individual XML (cirtual) control can be provided for the rows/entries
-                emptyListText = GetString(LIBSHIFTERBOX_EMPTY),     -- the text to be displayed if there are no entries left in the list
-                fontSize = 18,                                      -- size of the font
-                rowDataTypeSelectSound = SOUNDS.ABILITY_SLOTTED,    -- an optional sound to play when a row of this data type is selected
-                rowOnMouseRightClick = function(rowControl, data)   -- an optional callback function when a right-click is done inside a row element (e.g. for custom context menus)
-                    d("LSB: OnMouseRightClick: "..tostring(data.tooltipText))   -- reading custom 'tooltipText' from 'rowSetupAdditionalDataCallback'
-                end,
-                rowSetupCallback = function(rowControl, data)       -- function that will be called when a control of this type becomes visible
-                    d("LSB: RowSetupCallback")                      -- Calls self:SetupRowEntry, then this function, finally ZO_SortFilterList.SetupRow
-                end,
-                rowSetupAdditionalDataCallback = function(rowControl, data) -- data can be extended with additional data during the 'rowSetupCallback'
-                    d("LSB: SetupAdditionalDataCallback")
-                    data.tooltipText = data.value
-                    return rowControl, data                         -- this callback function must return the rowControl and (enriched) data again
-                end,
-                rowResetControlCallback = function()                -- an optional callback when the datatype control gets reset
-                    d("LSB: RowResetControlCallback")
-                end,
+                title = "" ,
+                ...
+                --> See "leftList = {" above -> The entries are the same!
             },
 
+--======================================================================================================================
+            --Callbacks that fire as a list is created, filled, cleared, entry is slected, unselected, row mouseOver, row mouseExit, dragDropStart, dragDropEnd, etc. happens
             callbackRegister = {                                    -- directly register callback functions with any of the exposed events
                 [LibShifterBox.EVENT_LEFT_LIST_ROW_ON_MOUSE_ENTER] = function(rowControl, shifterBox, data)
                     d("LSB: LeftListRowOnMouseEnter")
@@ -74,16 +67,26 @@
                 [LibShifterBox.EVENT_RIGHT_LIST_ROW_ON_MOUSE_ENTER] = function(rowControl, shifterBox, data)
                     d("LSB: RightListRowOnMouseEnter")
                 end
+                ...
+                -> For a complete list of the events please visit the LibShifterBox documentation:
+                -> https://github.com/klingo/ESO-LibShifterBox#api-reference  Search for "ShifterBox:RegisterCallback"
             }
         },
 
+--======================================================================================================================
         --Default keys at the lists
-        leftListDefaultKeys = { --The default keys at the left list (optional). Left and right list's keys must be unique together!
+        leftListDefaultKeys = { --table or function returning a table with the default keys at the left list (optional). Left and right list's keys must be unique in total!
         },
-        rightListDefaultKeys = { --The default keys at the right list (optional). Left and right list's keys must be unique together!
+        rightListDefaultKeys = { --table or function returning a table with the  default keys at the right list (optional). Left and right list's keys must be unique in total!
             "Value1", "Value2",
         },
+--======================================================================================================================
+    ----  -^- The custom settings for the dual lists                                                            -^-
+--======================================================================================================================
     },
+--======================================================================================================================
+    -- -^- The dual lists setup data                                                                                -^-
+--======================================================================================================================
 } ]]
 
 local widgetVersion = 1
@@ -127,8 +130,10 @@ local libShifterBoxes = {
     --[[
     --Example entry
     ["dualListBoxData.setupData.name] = {
-        lamCustomControl  = <the control of the LAM custom control where the LibShifterBox control will be added to>
-        shifterBoxControl = <the control of the LibShifterBox>
+        name                = dualListBoxData.setupData.name,
+        shifterBoxSetupData = dualListBoxData.setupData,
+        lamCustomControl    = <the control of the LAM custom control where the LibShifterBox control will be added to>
+        shifterBoxControl   = <the control of the LibShifterBox>
     }
     ]]
 }
@@ -139,6 +144,10 @@ local libShifterBoxes = {
 
 local function checkShifterBoxValid(customControl, shifterBoxSetupData, newBox)
     newBox = newBox or false
+    if not shifterBoxSetupData then
+        d(strfor(errorPrefix.." - Widget %q is missing the subtable setupData for the customControl name: %q", tos(widgetName), tos(customControl:GetName())))
+        return false
+    end
     local boxName = shifterBoxSetupData.name
     if not customControl or not boxName or boxName == "" then
         d(strfor(errorPrefix.." - Widget %q is missing the setupData subtable for box name: %q", tos(widgetName), tos(boxName)))
@@ -148,9 +157,14 @@ local function checkShifterBoxValid(customControl, shifterBoxSetupData, newBox)
     if newBox and boxData ~= nil then
         d(strfor(errorPrefix.." - Widget %q tried to register an already existing box name: %q", tos(widgetName), tos(boxName)))
         return false
-    elseif not newBox and boxData == nil then
-        d(strfor(errorPrefix.." - Widget %q tried to update an non existing box name: %q", tos(widgetName), tos(boxName)))
-        return false
+    elseif not newBox then
+        if boxData == nil then
+            d(strfor(errorPrefix.." - Widget %q tried to update an non existing box name: %q", tos(widgetName), tos(boxName)))
+            return false
+        elseif boxData ~= nil and boxData.shifterBoxControl == nil then
+            d(strfor(errorPrefix.." - Widget %q tried to update an non existing LibShifterBox control of box name: %q", tos(widgetName), tos(boxName)))
+            return false
+        end
     end
     return true
 end
@@ -170,7 +184,8 @@ end
 local function getBoxName(shifterBox)
     if not shifterBox then return end
     for k, dataTab in pairs(libShifterBoxes) do
-        if dataTab.control ~= nil and dataTab.control == shifterBox then
+        local shifterBoxControl = dataTab.shifterBoxControl
+        if shifterBoxControl ~= nil and shifterBoxControl == shifterBox then
             return k
         end
     end
@@ -179,7 +194,7 @@ end
 
 local function checkAndUpdateRightListDefaultEntries(shifterBox, rightListEntries, shifterBoxData)
     if shifterBox and rightListEntries and NonContiguousCount(rightListEntries) == 0 then
-        d(FCOIS.preChatVars.preChatTextRed .. locVars["LIBSHIFTERBOX_FCOIS_UNIQUEID_ITEMTYPES_RIGHT_NON_EMPTY"])
+        --d("Right list is empty!")
         local defaultRightListKeys = shifterBoxData and shifterBoxData.defaultRightListKeys
         if defaultRightListKeys and #defaultRightListKeys > 0 then
             shifterBox:MoveEntriesToRightList(defaultRightListKeys)
@@ -190,136 +205,74 @@ end
 local function myShifterBoxEventEntryMovedCallbackFunction(shifterBox, key, value, categoryId, isDestListLeftList)
     if not shifterBox or not key then return end
     local boxName = getBoxName(shifterBox)
---d("LSB FCOIS, boxName: " ..tostring(boxName))
     if not boxName or boxName == "" then return end
     local shifterBoxData = libShifterBoxes[boxName]
 
-    --Moved to the ?
+    --Moved to the left
     if isDestListLeftList == true then
-        if boxName == FCOISuniqueIdItemTypes then
-            --Moved to the left? Set SavedVariables value nil
-            FCOIS.settingsVars.settings.allowedFCOISUniqueIdItemTypes[key] = nil
-            --Check if any entry is left in the right list. If not:
-            --Add the default values weapons and armor again and output a chat message.
-            local rightListEntries = shifterBox:GetRightListEntriesFull()
-            checkAndUpdateRightListDefaultEntries(shifterBox, rightListEntries, shifterBoxData)
-
-        elseif boxName == FCOISexcludedSets then
-            hideItemLinkTooltip()
-            --Moved to the left? Set SavedVariables value nil
-            FCOIS.settingsVars.settings.autoMarkSetsExcludeSetsList[key] = nil
-        end
-    else
-        if boxName == FCOISuniqueIdItemTypes then
-            --Moved to the right? Save to SavedVariables with value true
-            FCOIS.settingsVars.settings.allowedFCOISUniqueIdItemTypes[key] = true
-
-        elseif boxName == FCOISexcludedSets then
-            hideItemLinkTooltip()
-            --Moved to the right? Save to SavedVariables with value true
-            FCOIS.settingsVars.settings.autoMarkSetsExcludeSetsList[key] = true
-        end
-    end
-end
-
---[[
-local function myShifterBoxEventEntryHighlightedCallbackFunction(control, shifterBox, key, value, categoryId, isLeftList)
-    if not shifterBox or not key then return end
-    local boxName = getBoxName(shifterBox)
-    if not boxName or boxName == "" then return end
-
-FCOIS._lsbHighlightedControl = control
-
-    if isLeftList == true then
-        if boxName == FCOISuniqueIdItemTypes then
-
-        end
-    else
-        if boxName == FCOISuniqueIdItemTypes then
-
-        end
-    end
-end
-]]
-
-local function updateLibShifterBoxEntries(parentCtrl, shifterBox, boxName)
-    if not parentCtrl or not boxName or boxName == "" then return end
-    local shifterBoxData = libShifterBoxes[boxName]
-    shifterBox = shifterBox or shifterBoxData.control
-    if not shifterBox then return end
-    local settings = FCOIS.settingsVars.settings
-
-    local leftListEntries = {}
-    local rightListEntries = {}
-
-    --FCOIS custom UniqueId
-    if boxName == FCOISuniqueIdItemTypes then
-        if not locVars or not locVars.ItemTypes then
-            locVars = FCOISlocVars.fcois_loc
-        end
-
-        local allowedFCOISUniqueIdItemTypes = settings.allowedFCOISUniqueIdItemTypes
-        for k,v in pairs(allowedFCOISUniqueIdItemTypes) do
-            if v == true then
-                rightListEntries[k] = strformat("%s [%s]", locVars.ItemTypes[k], tostring(k))
-            else
-                leftListEntries[k] = strformat("%s [%s]", locVars.ItemTypes[k], tostring(k))
-            end
-        end
-
-    --Excluded sets
-    elseif boxName == FCOISexcludedSets then
-        --LibSets is given?
-        if FCOIS.libSets then
-            local libSets = FCOIS.libSets
-            local allSetNames = libSets.GetAllSetNames()
-            local clientLang = FCOIS.clientLanguage
-            if allSetNames ~= nil then
-                local autoMarkSetsExcludeSetsList = settings.autoMarkSetsExcludeSetsList
-                for setId, setNamesTable in pairs(allSetNames) do
-                    --local setItemId = libSets.GetSetItemId(setId)
-                    -->How to add this to the data table of setNamesTable[clientLang] which will be added via AddEntriesToLeftList
-                    -->Currently not possible with LibShifterBox
-                    if autoMarkSetsExcludeSetsList[setId]~= nil then
-                        rightListEntries[setId] = setNamesTable[clientLang]
-                    else
-                        leftListEntries[setId] = setNamesTable[clientLang]
-                    end
-                end
-            end
-        end
-    end
-    shifterBox:ClearLeftList()
-    shifterBox:AddEntriesToLeftList(leftListEntries)
-
-    shifterBox:ClearRightList()
-    shifterBox:AddEntriesToRightList(rightListEntries)
-
-    if boxName == FCOISuniqueIdItemTypes then
+        local rightListEntries = shifterBox:GetRightListEntriesFull()
         checkAndUpdateRightListDefaultEntries(shifterBox, rightListEntries, shifterBoxData)
+
+    else
+        --Moved to the right? Save to SavedVariables with value true
     end
 end
 
-local function updateLibShifterBoxState(parentCtrl, shifterBox, boxName)
-    if not parentCtrl or not boxName or boxName == "" then return end
+
+local function updateLibShifterBoxEntries(customControl, dualListBoxData, shifterBoxControl)
+    local shifterBoxSetupData = dualListBoxData.setupData
+    if not checkShifterBoxValid(customControl, shifterBoxSetupData, false) then return end
+
+    local boxName = shifterBoxSetupData.name
     local shifterBoxData = libShifterBoxes[boxName]
-    shifterBox = shifterBox or shifterBoxData.control
-    if not shifterBox then return end
+    shifterBoxSetupData = shifterBoxSetupData or shifterBoxData.shifterBoxSetupData
+    if not shifterBoxSetupData then return end
+    shifterBoxControl = shifterBoxControl or shifterBoxData.shifterBoxControl
+    if not shifterBoxControl then return end
 
-    local isEnabled = true
-    --FCOIS uniqueId itemTypes
-    if boxName == FCOISuniqueIdItemTypes then
-        isEnabled = FCOIS.uniqueIdIsEnabledAndSetToFCOIS()
-    elseif boxName == FCOISexcludedSets then
-        isEnabled = (FCOIS.libSets ~= nil and FCOIS.settingsVars.settings.autoMarkSetsExcludeSets == true) or false
+    --Use default left list entries or nothing provided?
+    if shifterBoxSetupData.leftListDefaultKeys == nil then
+        --todo We need a function here that provides the leftList entries?
+        -->simply use shifterBoxSetupData.leftListDefaultKeys!
+        local leftListEntries = {}
+
+        shifterBoxControl:ClearLeftList()
+        shifterBoxControl:AddEntriesToLeftList(leftListEntries)
     end
 
-    parentCtrl:SetHidden(false)
-    parentCtrl:SetMouseEnabled(isEnabled)
-    shifterBox:SetHidden(false)
-    shifterBox:SetEnabled(isEnabled)
+    if shifterBoxSetupData.rightListDefaultKeys == nil then
+        --todo We need a function here that provides the rightList entries?
+        -->simply use shifterBoxSetupData.rightListDefaultKeys!
+        local rightListEntries = {}
+
+        shifterBoxControl:ClearRightList()
+        shifterBoxControl:AddEntriesToRightList(rightListEntries)
+    end
+
+    --Check for empty right list? fill up with default values again
+    --checkAndUpdateRightListDefaultEntries(shifterBoxControl, rightListEntries, shifterBoxData)
 end
-FCOIS.updateLibShifterBoxState = updateLibShifterBoxState
+
+
+local function updateLibShifterBoxState(customControl, dualListBoxData, shifterBoxControl)
+    local shifterBoxSetupData = dualListBoxData.setupData
+    if not checkShifterBoxValid(customControl, shifterBoxSetupData, false) then return end
+
+    local boxName = shifterBoxSetupData.name
+    local shifterBoxData = libShifterBoxes[boxName]
+    shifterBoxSetupData = shifterBoxSetupData or shifterBoxData.shifterBoxSetupData
+    if not shifterBoxSetupData then return end
+    shifterBoxControl = shifterBoxControl or shifterBoxData.shifterBoxControl
+    if not shifterBoxControl then return end
+
+    local isEnabled = shifterBoxSetupData.enabled ~= nil and getDefaultValue(shifterBoxSetupData.enabled)
+    if isEnabled == nil then isEnabled = true end
+
+    customControl:SetHidden(false)
+    customControl:SetMouseEnabled(isEnabled)
+    shifterBoxControl:SetHidden(false)
+    shifterBoxControl:SetEnabled(isEnabled)
+end
 
 local function myShifterBoxEventEntryHighlightedCallbackFunction(selectedRow, shifterBox, key, value, categoryId, isLeftList)
     if not shifterBox or not key then return end
@@ -327,15 +280,7 @@ local function myShifterBoxEventEntryHighlightedCallbackFunction(selectedRow, sh
 --df("LSB FCOIS, boxName: %s, key: %s, value: %s", tostring(boxName), tostring(key), tostring(value))
     if not boxName or boxName == "" then return end
 
-    if boxName == FCOISexcludedSets then
-        local anchorVar1 = RIGHT
-        local anchorVar2 = LEFT
-        if not isLeftList then
-            anchorVar1 = LEFT
-            anchorVar2 = RIGHT
-        end
-        showItemLinkTooltip(selectedRow, selectedRow, anchorVar1, 5, 0, anchorVar2)
-    end
+    --todo
 end
 
 local function myShifterBoxEventEntryUnHighlightedCallbackFunction(selectedRow, shifterBox, key, value, categoryId, isLeftList)
@@ -344,41 +289,231 @@ local function myShifterBoxEventEntryUnHighlightedCallbackFunction(selectedRow, 
 --d("LSB FCOIS, boxName: " ..tostring(boxName))
     if not boxName or boxName == "" then return end
 
-    if boxName == FCOISexcludedSets then
-        hideItemLinkTooltip()
-    end
+    --todo
 end
 
-local function updateLibShifterBox(parentCtrl, shifterBox, shifterBoxSetupData)
-    if not checkShifterBoxValid(parentCtrl, shifterBoxSetupData, false) then return end
+local function updateLibShifterBox(customControl, dualListBoxData, shifterBoxControl)
+    local shifterBoxSetupData = dualListBoxData.setupData
+    if not checkShifterBoxValid(customControl, shifterBoxSetupData, false) then return end
 
     local boxName = shifterBoxSetupData.name
-    shifterBoxSetupData = shifterBoxSetupData or libShifterBoxes[boxName].shifterBoxSetupData
+    local shifterBoxData = libShifterBoxes[boxName]
+    shifterBoxSetupData = shifterBoxSetupData or shifterBoxData.shifterBoxSetupData
     if not shifterBoxSetupData then return end
-    shifterBox = shifterBox or shifterBoxSetupData.shifterBoxControl
-    if not shifterBox then return end
+    shifterBoxControl = shifterBoxControl or shifterBoxData.shifterBoxControl
+    if not shifterBoxControl then return end
 
-    parentCtrl:SetResizeToFitDescendents(true)
+    --Tell the custom control to auto-resize dependent on the dual list boxes size
+    customControl:SetResizeToFitDescendents(true)
+    --Re-Anchor to the custom control
+    shifterBoxControl:SetAnchor(TOPLEFT, customControl, TOPLEFT, 0, 0) -- will automatically call ClearAnchors
+    --Change the dimensions
+    local width = shifterBoxSetupData.width ~= nil and getDefaultValue(shifterBoxSetupData.width)
+    local height = shifterBoxSetupData.height ~= nil and getDefaultValue(shifterBoxSetupData.height)
+    height = zo_clamp(shifterBoxSetupData.minHeight, shifterBoxSetupData.maxHeigth)
+    shifterBoxControl:SetDimensions(width, height)
 
-    shifterBox:SetAnchor(TOPLEFT, parentCtrl, TOPLEFT, 0, 0) -- will automatically call ClearAnchors
-    shifterBox:SetDimensions(shifterBoxData.width, shifterBoxData.height)
 
-    --Add the entries to the left and right shifter box
-    updateLibShifterBoxEntries(parentCtrl, shifterBox, boxName)
+
+    --Add the entries to the left and right shifter boxes
+    -->Currently not needed. Use shifterBoxSetupData.leftListDefaultKeys and shifterBoxSetupData.rightListDefaultKeys
+    --updateLibShifterBoxEntries(customControl, shifterBoxSetupData, shifterBoxControl)
+
     --Update the enabled state of the shifter box
-    updateLibShifterBoxState(parentCtrl, shifterBox, boxName)
+    updateLibShifterBoxState(customControl, shifterBoxSetupData, shifterBoxControl)
 
-    --Add the callback function to the entry was moved event
-    shifterBox:RegisterCallback(lsb.EVENT_ENTRY_MOVED,          myShifterBoxEventEntryMovedCallbackFunction)
-    --Add the callback as an entry was highlighted at the left side
-    shifterBox:RegisterCallback(lsb.EVENT_ENTRY_HIGHLIGHTED,    myShifterBoxEventEntryHighlightedCallbackFunction)
-    shifterBox:RegisterCallback(lsb.EVENT_ENTRY_UNHIGHLIGHTED,  myShifterBoxEventEntryUnHighlightedCallbackFunction)
+
+
+    --Add the callback functions, if provided
+    local customSettings = shifterBoxSetupData.customSettings
+    local callbackRegister = customSettings.callbackRegister
+    if callbackRegister ~= nil then
+        --Add the callback as he left list was created
+        if callbackRegister.EVENT_LEFT_LIST_CREATED then
+            local function myLeftListCreatedFunction(leftListControl, shifterBox)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_CREATED, myLeftListCreatedFunction)
+        end
+
+        --Add the callback as he left list was created
+        if callbackRegister.EVENT_RIGHT_LIST_CREATED then
+            local function myRightListCreatedFunction(leftListControl, shifterBox)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_CREATED, myRightListCreatedFunction)
+        end
+
+        --Add the callback as an entry was moved
+        if callbackRegister.EVENT_ENTRY_MOVED then
+            shifterBoxControl:RegisterCallback(LSB.EVENT_ENTRY_MOVED,                   myShifterBoxEventEntryMovedCallbackFunction)
+            shifterBoxControl.LAMduallistBox_EventEntryMovedCallbackFunction =          myShifterBoxEventEntryMovedCallbackFunction
+        end
+
+        --Add the callback as an entry was highlighted at the left side
+        if callbackRegister.EVENT_ENTRY_HIGHLIGHTED then
+            shifterBoxControl:RegisterCallback(LSB.EVENT_ENTRY_HIGHLIGHTED,             myShifterBoxEventEntryHighlightedCallbackFunction)
+            shifterBoxControl.LAMduallistBox_EventEntryHighlightedCallbackFunction =    myShifterBoxEventEntryHighlightedCallbackFunction
+        end
+
+        --Add the callback as an entry was unhighlighted again at the left side
+        if callbackRegister.EVENT_ENTRY_UNHIGHLIGHTED then
+            shifterBoxControl:RegisterCallback(LSB.EVENT_ENTRY_UNHIGHLIGHTED,           myShifterBoxEventEntryUnHighlightedCallbackFunction)
+            shifterBoxControl.LAMduallistBox_EventEntryUnHighlightedCallbackFunction =  myShifterBoxEventEntryUnHighlightedCallbackFunction
+        end
+
+        --Add the callback as the left list was cleared
+        if callbackRegister.EVENT_LEFT_LIST_CLEARED then
+            local function myLeftListClearedFunction(shifterBox)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_CLEARED, myLeftListClearedFunction)
+        end
+
+        --Add the callback as the right list was cleared
+        if callbackRegister.EVENT_RIGHT_LIST_CLEARED then
+            local function myRightListClearedFunction(shifterBox)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_CLEARED, myRightListClearedFunction)
+        end
+
+        --Add the callback as the left list got a new added entry
+        if callbackRegister.EVENT_LEFT_LIST_ENTRY_ADDED then
+            local function myLeftListEntryAddedFunction(shifterBox, list, entryAdded)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ENTRY_ADDED, myLeftListEntryAddedFunction)
+            --The returned entryAdded has the following structure:
+            --[[
+            entryAdded = {
+                key=key,
+                value=value,
+                categoryId=categoryId,
+            }
+            ]]
+        end
+
+        --Add the callback as the left list got a new added entry
+        if callbackRegister.EVENT_RIGHT_LIST_ENTRY_ADDED then
+            local function myRightListEntryAddedFunction(shifterBox, list, entryAdded)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ENTRY_ADDED, myRightListEntryAddedFunction)
+            --The returned entryAdded has the following structure:
+            --[[
+            entryAdded = {
+                key=key,
+                value=value,
+                categoryId=categoryId,
+            }
+            ]]
+        end
+
+        --Add the callback as the left list got a new added entry
+        if callbackRegister.EVENT_LEFT_LIST_ENTRY_REMOVED then
+            local function myLeftListEntryRemovedFunction(shifterBox, list, entryRemoved)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ENTRY_REMOVED, myLeftListEntryAddedFunction)
+        end
+
+        --Add the callback as the left list got a new added entry
+        if callbackRegister.EVENT_RIGHT_LIST_ENTRY_REMOVED then
+            local function myRightListEntryRemovedFunction(shifterBox, list, entryRemoved)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ENTRY_REMOVED, myRightListEntryRemovedFunction)
+        end
+
+
+        --Add the callback as the left row's OnMouseEnter fires
+        if callbackRegister.EVENT_LEFT_LIST_ROW_ON_MOUSE_ENTER then
+            local function myLeftListRowMouseEnterFunction(rowControl, shifterBox, rawRowData)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_ENTER, myLeftListRowMouseEnterFunction)
+        end
+
+        --Add the callback as the right row's OnMouseEnter fires
+        if callbackRegister.EVENT_RIGHT_LIST_ROW_ON_MOUSE_ENTER then
+            local function myRightListRowMouseEnterFunction(rowControl, shifterBox, rawRowData)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_ENTER, myRightListRowMouseEnterFunction)
+        end
+
+        --Add the callback as the left row's OnMouseExit fires
+        if callbackRegister.EVENT_LEFT_LIST_ROW_ON_MOUSE_EXIT then
+            local function myLeftListRowMouseExitFunction(rowControl, shifterBox, rawRowData)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_EXIT, myLeftListRowMouseExitFunction)
+        end
+
+        --Add the callback as the right row's OnMouseExit fires
+        if callbackRegister.EVENT_RIGHT_LIST_ROW_ON_MOUSE_EXIT then
+            local function myRightListRowMouseExitFunction(rowControl, shifterBox, rawRowData)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_EXIT, myRightListRowMouseExitFunction)
+        end
+
+        --Add the callback as the left row's OnMouseUp fires
+        if callbackRegister.EVENT_LEFT_LIST_ROW_ON_MOUSE_UP then
+            local function myLeftListRowMouseUpFunction(rowControl, shifterBox, mouseButton, isInside, altKey, shiftKey, commandKey, rawRowData)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_UP, myLeftListRowMouseUpFunction)
+        end
+
+        --Add the callback as the rightrow's OnMouseUp fires
+        if callbackRegister.EVENT_RIGHT_LIST_ROW_ON_MOUSE_UP then
+            local function myRightListRowMouseUpFunction(rowControl, shifterBox, mouseButton, isInside, altKey, shiftKey, commandKey, rawRowData)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_UP, myRightListRowMouseUpFunction)
+        end
+
+        --Add the callback as the left row's OnDragStart fires
+        if callbackRegister.EVENT_LEFT_LIST_ROW_ON_DRAG_START then
+            local function myLeftListRowDragStartFunction(draggedControl, shifterBox, mouseButton, rawDraggedRowData)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_START, myLeftListRowDragStartFunction)
+        end
+
+        --Add the callback as the right row's OnDragStart fires
+        if callbackRegister.EVENT_RIGHT_LIST_ROW_ON_DRAG_START then
+            local function myRightListRowDragStartFunction(draggedControl, shifterBox, mouseButton, rawDraggedRowData)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_START, myRightListRowDragStartFunction)
+        end
+
+        --Add the callback as the left row's OnDragEnd fires
+        if callbackRegister.EVENT_LEFT_LIST_ROW_ON_DRAG_END then
+            local function myLeftListRowDragEndFunction(draggedOnToControl, shifterBox, mouseButton, rawDraggedRowData, hasSameShifterBoxParent, wasDragSuccessful)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_END, myLeftListRowDragEndFunction)
+        end
+
+        --Add the callback as the right row's OnDragEnd fires
+        if callbackRegister.EVENT_RIGHT_LIST_ROW_ON_DRAG_END then
+            local function myRightListRowDragEndFunction(draggedOnToControl, shifterBox, mouseButton, rawDraggedRowData, hasSameShifterBoxParent, wasDragSuccessful)
+                -- do something
+            end
+            shifterBoxControl:RegisterCallback(LSB.EVENT_RIGHT_LIST_ROW_ON_DRAG_END, myRightListRowDragEndFunction)
+        end
+    end
 end
 
 ------------------------------------------------------------------------------------------------------------------------
 
 --Create a LibShifterBox for e.g. LAM settings panel
-local function createLibShifterBox(customControl, shifterBoxSetupData)
+local function createLibShifterBox(customControl, dualListBoxData)
+    local shifterBoxSetupData = dualListBoxData.setupData
     if not checkShifterBoxValid(customControl, shifterBoxSetupData, true) then return end
 
     --Create the new LibShifterBox now
@@ -394,15 +529,25 @@ local function createLibShifterBox(customControl, shifterBoxSetupData)
     -- @param leftListEntries - OPTIONAL: directly provide entries for left listBox (a table or a function returning a table)
     -- @param rightListEntries - OPTIONAL: directly provide entries for right listBox (a table or a function returning a table)
     --LibShifterBox:New(uniqueAddonName, uniqueShifterBoxName, parentControl, customSettings, anchorOptions, dimensionOptions, leftListEntries, rightListEntries)
-    local shifterBox = LSB(widgetName, boxName, customControl, shifterBoxSetupData.customSettings, nil, nil, nil, nil)
+    local shifterBox = LSB(widgetName,                  --uniqueAddonName
+            boxName,                                    --uniqueShifterBoxName
+            customControl,                              --parentControl
+            shifterBoxSetupData.customSettings,         --customSettings
+            nil,                                        --dimensionOptions
+            nil,                                        --anchorOptions
+            shifterBoxSetupData.leftListDefaultKeys,    --leftListEntries
+            shifterBoxSetupData.rightListDefaultKeys    --rightListEntries
+    )
     if shifterBox ~= nil then
         libShifterBoxes[boxName] = {}
-        libShifterBoxes[boxName].shifterBoxSetupData = shifterBoxSetupData
-        libShifterBoxes[boxName].lamCustomControl = customControl
-        libShifterBoxes[boxName].shifterBoxControl = shifterBox
+        libShifterBoxes[boxName].name =                 boxName
+        libShifterBoxes[boxName].dualListBoxData =      dualListBoxData
+        libShifterBoxes[boxName].shifterBoxSetupData =  shifterBoxSetupData
+        libShifterBoxes[boxName].lamCustomControl =     customControl
+        libShifterBoxes[boxName].shifterBoxControl =    shifterBox
 
         --Update the shifter box position, entries, state
-        updateLibShifterBox(customControl, shifterBox, shifterBoxSetupData)
+        updateLibShifterBox(customControl, dualListBoxData, shifterBox)
 
         return shifterBox
     else
@@ -422,7 +567,7 @@ local function createFunc(parent, customControl, dualListBoxData)
         d(strfor(errorPrefix.." - Widget %q is missing the setupData subtable for box custom control: %q", tos(widgetName), tos(customControl:GetName())))
         return
     end
-    return createLibShifterBox(customControl, shifterBoxSetupData)
+    return createLibShifterBox(customControl, dualListBoxData)
 end
 
 
