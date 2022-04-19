@@ -11,30 +11,69 @@
         name = "LAM_DUALLISTBOX_EXAMPLE1",
         width       = 580, --the width of both list boxes together
         height      = 200, --the height of both list boxes together. minHeight of the LAm control needs to be >= this value!
-        showMoveAllButtons = true,  --(optional)
-        dragDropEnabled = true,   --(optional)
-        sortEnabled = true,   --(optional)
-        sortBy = "value",     --(optional)
 
         --The setup data for the lists
-        listSettings = {
+        -->The custom settings are defined via the library LibShifterBox. You can find the documentation here:
+        -->https://github.com/klingo/ESO-LibShifterBox#api-reference    Search for "customSettings"
+        customSettings = {
+            showMoveAllButtons = true,  -- the >> and << buttons to move all entries can be hidden if set to false
+            dragDropEnabled = true,     -- entries can be moved between lsit with drag-and-drop
+            sortEnabled = true,         -- sorting of the entries can be disabled
+            sortBy = "value",           -- sort the list by value or key (allowed are: "value" or "key")
 
-            --The setup data of the left listbox
-            leftList = {
-                title = "Left list title",
-                rowHeight = 32,  --optional
-                rowTemplateName = "ShifterBoxEntryTemplate", --optional
-                emptyListText = GetString(LIBSHIFTERBOX_EMPTY),  --optional
-                fontSize = 18,  --optional
+            leftList = {                -- list-specific settings that apply to the LEFT list
+                title = "",                                         -- the title/header of the list
+                rowHeight = 32,                                     -- the height of an individual row/entry
+                rowTemplateName = "ShifterBoxEntryTemplate",        -- an individual XML (cirtual) control can be provided for the rows/entries
+                emptyListText = GetString(LIBSHIFTERBOX_EMPTY),     -- the text to be displayed if there are no entries left in the list
+                fontSize = 18,                                      -- size of the font
+                rowDataTypeSelectSound = SOUNDS.ABILITY_SLOTTED,    -- an optional sound to play when a row of this data type is selected
+                rowOnMouseRightClick = function(rowControl, data)   -- an optional callback function when a right-click is done inside a row element (e.g. for custom context menus)
+                    d("LSB: OnMouseRightClick: "..tostring(data.tooltipText))   -- reading custom 'tooltipText' from 'rowSetupAdditionalDataCallback'
+                end,
+                rowSetupCallback = function(rowControl, data)       -- function that will be called when a control of this type becomes visible
+                    d("LSB: RowSetupCallback")                      -- Calls self:SetupRowEntry, then this function, finally ZO_SortFilterList.SetupRow
+                end,
+                rowSetupAdditionalDataCallback = function(rowControl, data) -- data can be extended with additional data during the 'rowSetupCallback'
+                    d("LSB: SetupAdditionalDataCallback")
+                    data.tooltipText = data.value
+                    return rowControl, data                         -- this callback function must return the rowControl and (enriched) data again
+                end,
+                rowResetControlCallback = function()                -- an optional callback when the datatype control gets reset
+                    d("LSB: RowResetControlCallback")
+                end,
             },
 
-            --The setup data of the right listbox
-            rightList = {
-                title = "Left list title",
-                rowHeight = 32,  --optional
-                rowTemplateName = "ShifterBoxEntryTemplate", --optional
-                emptyListText = GetString(LIBSHIFTERBOX_EMPTY),  --optional
-                fontSize = 18,  --optional
+            rightList = {               -- list-specific settings that apply to the RIGHT list
+                title = "",                                         -- the title/header of the list
+                rowHeight = 32,                                     -- the height of an individual row/entry
+                rowTemplateName = "ShifterBoxEntryTemplate",        -- an individual XML (cirtual) control can be provided for the rows/entries
+                emptyListText = GetString(LIBSHIFTERBOX_EMPTY),     -- the text to be displayed if there are no entries left in the list
+                fontSize = 18,                                      -- size of the font
+                rowDataTypeSelectSound = SOUNDS.ABILITY_SLOTTED,    -- an optional sound to play when a row of this data type is selected
+                rowOnMouseRightClick = function(rowControl, data)   -- an optional callback function when a right-click is done inside a row element (e.g. for custom context menus)
+                    d("LSB: OnMouseRightClick: "..tostring(data.tooltipText))   -- reading custom 'tooltipText' from 'rowSetupAdditionalDataCallback'
+                end,
+                rowSetupCallback = function(rowControl, data)       -- function that will be called when a control of this type becomes visible
+                    d("LSB: RowSetupCallback")                      -- Calls self:SetupRowEntry, then this function, finally ZO_SortFilterList.SetupRow
+                end,
+                rowSetupAdditionalDataCallback = function(rowControl, data) -- data can be extended with additional data during the 'rowSetupCallback'
+                    d("LSB: SetupAdditionalDataCallback")
+                    data.tooltipText = data.value
+                    return rowControl, data                         -- this callback function must return the rowControl and (enriched) data again
+                end,
+                rowResetControlCallback = function()                -- an optional callback when the datatype control gets reset
+                    d("LSB: RowResetControlCallback")
+                end,
+            },
+
+            callbackRegister = {                                    -- directly register callback functions with any of the exposed events
+                [LibShifterBox.EVENT_LEFT_LIST_ROW_ON_MOUSE_ENTER] = function(rowControl, shifterBox, data)
+                    d("LSB: LeftListRowOnMouseEnter")
+                end,
+                [LibShifterBox.EVENT_RIGHT_LIST_ROW_ON_MOUSE_ENTER] = function(rowControl, shifterBox, data)
+                    d("LSB: RightListRowOnMouseEnter")
+                end
             }
         },
 
@@ -49,6 +88,7 @@
 
 local widgetVersion = 1
 local widgetName = "LibAddonMenuDualListBox"
+local errorPrefix = "[LibAddonMenu]ERROR"
 
 local LAM = LibAddonMenu2
 local LSB = LibShifterBox --will be updated at EVENT_ADD_ON_LOADED again
@@ -80,9 +120,42 @@ local MIN_HEIGHT = 26
 
 
 ------------------------------------------------------------------------------------------------------------------------
+-- variables for LibShifterBox
 
 --The created LibShifterBoxes
-local libShifterBoxes = {}
+local libShifterBoxes = {
+    --[[
+    --Example entry
+    ["dualListBoxData.setupData.name] = {
+        lamCustomControl  = <the control of the LAM custom control where the LibShifterBox control will be added to>
+        shifterBoxControl = <the control of the LibShifterBox>
+    }
+    ]]
+}
+
+
+------------------------------------------------------------------------------------------------------------------------
+-- functions for LibShifterBox
+
+local function checkShifterBoxValid(customControl, shifterBoxSetupData, newBox)
+    newBox = newBox or false
+    local boxName = shifterBoxSetupData.name
+    if not customControl or not boxName or boxName == "" then
+        d(strfor(errorPrefix.." - Widget %q is missing the setupData subtable for box name: %q", tos(widgetName), tos(boxName)))
+        return false
+    end
+    local boxData = libShifterBoxes[boxName]
+    if newBox and boxData ~= nil then
+        d(strfor(errorPrefix.." - Widget %q tried to register an already existing box name: %q", tos(widgetName), tos(boxName)))
+        return false
+    elseif not newBox and boxData == nil then
+        d(strfor(errorPrefix.." - Widget %q tried to update an non existing box name: %q", tos(widgetName), tos(boxName)))
+        return false
+    end
+    return true
+end
+
+
 
 local function getLeftListEntriesFull(shifterBox)
     if not shifterBox then return end
@@ -276,11 +349,13 @@ local function myShifterBoxEventEntryUnHighlightedCallbackFunction(selectedRow, 
     end
 end
 
-local function updateLibShifterBox(parentCtrl, shifterBox, boxName)
-    if not parentCtrl or not boxName or boxName == "" then return end
-    local shifterBoxData = libShifterBoxes[boxName]
-    if not shifterBoxData then return end
-    shifterBox = shifterBox or shifterBoxData.control
+local function updateLibShifterBox(parentCtrl, shifterBox, shifterBoxSetupData)
+    if not checkShifterBoxValid(parentCtrl, shifterBoxSetupData, false) then return end
+
+    local boxName = shifterBoxSetupData.name
+    shifterBoxSetupData = shifterBoxSetupData or libShifterBoxes[boxName].shifterBoxSetupData
+    if not shifterBoxSetupData then return end
+    shifterBox = shifterBox or shifterBoxSetupData.shifterBoxControl
     if not shifterBox then return end
 
     parentCtrl:SetResizeToFitDescendents(true)
@@ -304,23 +379,36 @@ end
 
 --Create a LibShifterBox for e.g. LAM settings panel
 local function createLibShifterBox(customControl, shifterBoxSetupData)
-    local boxName = shifterBoxSetupData.name
-    if not customControl or not boxName or boxName == "" then
-        d(strfor("[LibAddonMenu-2.0]ERROR - Widget %q is missing the setupData subtable for box name: %q", tos(widgetName), tos(boxName)))
-        return
-    end
-    local boxData = libShifterBoxes[boxName]
-    if boxData ~= nil then
-        d(strfor("[LibAddonMenu-2.0]ERROR - Widget %q tried to register an already existing box name: %q", tos(widgetName), tos(boxName)))
-        return
-    end
+    if not checkShifterBoxValid(customControl, shifterBoxSetupData, true) then return end
+
     --Create the new LibShifterBox now
-    libShifterBoxes[boxName] = {}
-    libShifterBoxes[boxName].lamCustomControl = customControl
-    local shifterBox = LSB(widgetName, boxName, customControl, boxData.listSettings)
-    libShifterBoxes[boxName].control = shifterBox
-    --Update the shifter box entries and state
-    updateLibShifterBox(customControl, shifterBox, boxName)
+    local boxName = shifterBoxSetupData.name
+
+    --LSB(... = LSB:New( ... via metatables
+    -- @param uniqueAddonName - the unique name of your addon
+    -- @param uniqueShifterBoxName - the unique name of this shifterBox (within your addon)
+    -- @param parentControl - the control reference to which the shifterBox should be added as a child
+    -- @param customSettings - OPTIONAL: override the default settings
+    -- @param dimensionOptions - OPTIONAL: directly provide dimensionOptions instead of calling :SetDimensions afterwards (must be table with: number width, number height)
+    -- @param anchorOptions - OPTIONAL: directly provide anchorOptions instead of calling :SetAnchor afterwards (must be table with: number whereOnMe, object anchorTargetControl, number whereOnTarget, number offsetX, number offsetY)
+    -- @param leftListEntries - OPTIONAL: directly provide entries for left listBox (a table or a function returning a table)
+    -- @param rightListEntries - OPTIONAL: directly provide entries for right listBox (a table or a function returning a table)
+    --LibShifterBox:New(uniqueAddonName, uniqueShifterBoxName, parentControl, customSettings, anchorOptions, dimensionOptions, leftListEntries, rightListEntries)
+    local shifterBox = LSB(widgetName, boxName, customControl, shifterBoxSetupData.customSettings, nil, nil, nil, nil)
+    if shifterBox ~= nil then
+        libShifterBoxes[boxName] = {}
+        libShifterBoxes[boxName].shifterBoxSetupData = shifterBoxSetupData
+        libShifterBoxes[boxName].lamCustomControl = customControl
+        libShifterBoxes[boxName].shifterBoxControl = shifterBox
+
+        --Update the shifter box position, entries, state
+        updateLibShifterBox(customControl, shifterBox, shifterBoxSetupData)
+
+        return shifterBox
+    else
+        d(strfor(errorPrefix.." - Widget %q was unable to create the LibShifterBox control for box name: %q", tos(widgetName), tos(boxName)))
+        return
+    end
 end
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -328,14 +416,13 @@ end
 ------------------------------------------------------------------------------------------------------------------------
 
 local function createFunc(parent, customControl, dualListBoxData)
-
     --Create the LibShifterBox boxes with the provided leftList and rightList setup data
     local shifterBoxSetupData = dualListBoxData.setupData
     if not shifterBoxSetupData then
-        d(strfor("[LibAddonMenu-2.0]ERROR - Widget %q is missing the setupData subtable for box custom control: %q", tos(widgetName), tos(customControl:GetName())))
+        d(strfor(errorPrefix.." - Widget %q is missing the setupData subtable for box custom control: %q", tos(widgetName), tos(customControl:GetName())))
         return
     end
-    createLibShifterBox(customControl, shifterBoxSetupData)
+    return createLibShifterBox(customControl, shifterBoxSetupData)
 end
 
 
@@ -360,6 +447,10 @@ function LAMCreateControl.duallistbox(parent, dualListBoxData, controlName)
     LAM.util.RegisterForRefreshIfNeeded(control)
 
     local dualListBoxControl = createFunc(parent, control, dualListBoxData)
+    if dualListBoxControl == nil then
+        d(strfor(errorPrefix.." - Widget %q did not create the dual list boxes for control %q", tos(widgetName), tos(control:GetName())))
+        return
+    end
     control.dualListBox = dualListBoxControl
     return control
 end
