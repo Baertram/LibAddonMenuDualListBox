@@ -187,12 +187,16 @@ end
 
 ------------------------------------------------------------------------------------------------------------------------
 
-local function getLeftListEntriesFull(shifterBox)
+local function getLeftListEntriesFull(customControl)
+    if not customControl then return end
+    local shifterBox = customControl.dualListBoxData
     if not shifterBox then return end
     return shifterBox:GetLeftListEntriesFull()
 end
 
-local function getRightListEntriesFull(shifterBox)
+local function getRightListEntriesFull(customControl)
+    if not customControl then return end
+    local shifterBox = customControl.dualListBoxData
     if not shifterBox then return end
     return shifterBox:GetRightListEntriesFull()
 end
@@ -715,12 +719,19 @@ function LAMCreateControl.duallistbox(parent, dualListBoxData, controlName)
         return
     end
     control.dualListBox = dualListBoxControl
+    control.dualListBox.dualListBoxData = dualListBoxData
 
     LAM.util.RegisterForRefreshIfNeeded(control)
 
+    --Get functions
+    control.GetLeftListEntries = getLeftListEntriesFull
+    control.GetRightListEntries = getRightListEntriesFull
+
+    --Set functions
+    --Only for the refresh
     control.UpdateValue = UpdateValue
+
     --Left list/right list entries handling
-    --customControl, values (table)
     control.UpdateLeftListValues =  UpdateLeftListValues
     control.UpdateRightListValues = UpdateRightListValues
 
@@ -728,7 +739,7 @@ function LAMCreateControl.duallistbox(parent, dualListBoxData, controlName)
     control.UpdateDisabled =        UpdateDisabled
     control:UpdateDisabled()
 
-    return control
+    return control --the LAM custom control containing the .dualListBox subTable/control
 end
 
 
