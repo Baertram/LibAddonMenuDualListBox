@@ -11,8 +11,8 @@
     setupData = {
         --The overall dual list box control setup data
         name = "LAM_DUALLISTBOX_EXAMPLE1",
-        width       = 580, --number of function returning a number for the width of both list boxes together
-        height      = 200, --number of function returning a number for the height of both list boxes together. minHeight of the LAM control needs to be >= this value!
+        width       = 580, --number or function returning a number for the width of both list boxes together. If > the width of the LAM control container then the width willbe the LAM control container's width.
+        height      = 200, --number or function returning a number for the height of both list boxes together. minHeight of the LAM control needs to be >= this value! If > maxHeight then maxHeight of the LAM contro will be used
 
 --======================================================================================================================
     ----  -v- The custom settings for the dual lists                                                            -v-
@@ -120,6 +120,7 @@ local function UpdateValue(control)
 end
 
 local MIN_HEIGHT = 26
+local MAX_WIDTH = 0
 
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -151,6 +152,15 @@ local function getBoxName(shifterBox)
         end
     end
     return nil
+end
+
+local function checkAndGetShifterBoxNameAndData(shifterBox)
+    if not shifterBox then return nil, nil end
+    local boxName = shifterBox.boxName or getBoxName(shifterBox)
+    if not boxName or boxName == "" then return nil, nil end
+    local shifterBoxData = libShifterBoxes[boxName]
+    if not shifterBoxData then return nil, nil end
+    return boxName, shifterBoxData
 end
 
 local function checkShifterBoxValid(customControl, shifterBoxSetupData, newBox)
@@ -211,73 +221,120 @@ end
 -- LibShifterBox - Event callback functions
 
 local function myShifterBoxEventEntryMovedCallbackFunction(shifterBox, key, value, categoryId, isDestListLeftList)
-    if not shifterBox or not key then return end
-    local boxName = getBoxName(shifterBox)
-    if not boxName or boxName == "" then return end
-    local shifterBoxData = libShifterBoxes[boxName]
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData or not key then return end
 
     --Moved to the left
     if isDestListLeftList == true then
-        local rightListEntries = shifterBox:GetRightListEntriesFull()
-        checkAndUpdateRightListDefaultEntries(shifterBox, rightListEntries, shifterBoxData)
+        --local rightListEntries = shifterBox:GetRightListEntriesFull()
+        --checkAndUpdateRightListDefaultEntries(shifterBox, rightListEntries, shifterBoxData)
 
     else
         --Moved to the right? Save to SavedVariables with value true
+
     end
 end
 
+local function myShifterBoxEventEntryHighlightedCallbackFunction(selectedRow, shifterBox, key, value, categoryId, isLeftList)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData or not key then return end
+
+end
+
+local function myShifterBoxEventEntryUnHighlightedCallbackFunction(selectedRow, shifterBox, key, value, categoryId, isLeftList)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData or not key then return end
+
+end
+
 local function myShifterBoxEventLeftListCreatedCallbackFunction(leftListControl, shifterBox)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 local function myShifterBoxEventRightListCreatedCallbackFunction(rightListControl, shifterBox)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 local function myShifterBoxEventLeftListClearedCallbackFunction(shifterBox)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 local function myShifterBoxEventRightListClearedCallbackFunction(shifterBox)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 local function myShifterBoxEventLeftListEntryAddedCallbackFunction(shifterBox, list, entryAdded)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 local function myShifterBoxEventRightListEntryAddedCallbackFunction(shifterBox, list, entryAdded)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 local function myShifterBoxEventLeftListEntryCallbackRemovedFunction(shifterBox, list, entryRemoved)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 local function myShifterBoxEventRightListEntryCallbackRemovedFunction(shifterBox, list, entryRemoved)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 local function myShifterBoxEventLeftListRowMouseEnterCallbackFunction(rowControl, shifterBox, rawRowData)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 local function myShifterBoxEventRightListRowMouseEnterCallbackFunction(rowControl, shifterBox, rawRowData)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 local function myShifterBoxEventLeftListRowMouseExitCallbackFunction(rowControl, shifterBox, rawRowData)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 local function myShifterBoxEventRightListRowMouseExitCallbackFunction(rowControl, shifterBox, rawRowData)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 local function myShifterBoxEventLeftListRowMouseUpCallbackFunction(rowControl, shifterBox, mouseButton, isInside, altKey, shiftKey, commandKey, rawRowData)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 local function myShifterBoxEventRightListRowMouseUpCallbackFunction(rowControl, shifterBox, mouseButton, isInside, altKey, shiftKey, commandKey, rawRowData)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 local function myShifterBoxEventLeftListRowDragStartCallbackFunction(draggedControl, shifterBox, mouseButton, rawDraggedRowData)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 local function myShifterBoxEventRightListRowDragStartCallbackFunction(draggedControl, shifterBox, mouseButton, rawDraggedRowData)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 local function myShifterBoxEventLeftListRowDragEndCallbackFunction(draggedOnToControl, shifterBox, mouseButton, rawDraggedRowData, hasSameShifterBoxParent, wasDragSuccessful)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 local function myShifterBoxEventRightListRowDragEndCallbackFunction(draggedOnToControl, shifterBox, mouseButton, rawDraggedRowData, hasSameShifterBoxParent, wasDragSuccessful)
+    local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+    if not boxName or not shifterBoxData then return end
 end
 
 
@@ -317,9 +374,10 @@ local function updateLibShifterBoxEntries(customControl, dualListBoxData, shifte
 end
 
 
-local function updateLibShifterBoxState(customControl, dualListBoxData, shifterBoxControl)
+local function updateLibShifterBoxState(customControl, dualListBoxData, shifterBoxControl, alreadyChecked)
+    alreadyChecked = alreadyChecked or false
     local shifterBoxSetupData = dualListBoxData.setupData
-    if not checkShifterBoxValid(customControl, shifterBoxSetupData, false) then return end
+    if alreadyChecked == false and not checkShifterBoxValid(customControl, shifterBoxSetupData, false) then return end
 
     local boxName = shifterBoxSetupData.name
     local shifterBoxData = libShifterBoxes[boxName]
@@ -337,61 +395,21 @@ local function updateLibShifterBoxState(customControl, dualListBoxData, shifterB
     shifterBoxControl:SetEnabled(isEnabled)
 end
 
-local function myShifterBoxEventEntryHighlightedCallbackFunction(selectedRow, shifterBox, key, value, categoryId, isLeftList)
-    if not shifterBox or not key then return end
-    local boxName = getBoxName(shifterBox)
---df("LSB FCOIS, boxName: %s, key: %s, value: %s", tostring(boxName), tostring(key), tostring(value))
-    if not boxName or boxName == "" then return end
 
-    --todo
-end
-
-local function myShifterBoxEventEntryUnHighlightedCallbackFunction(selectedRow, shifterBox, key, value, categoryId, isLeftList)
-    if not shifterBox or not key then return end
-    local boxName = getBoxName(shifterBox)
---d("LSB FCOIS, boxName: " ..tostring(boxName))
-    if not boxName or boxName == "" then return end
-
-    --todo
-end
-
-local function updateLibShifterBox(customControl, dualListBoxData, shifterBoxControl)
+local function updateLibShifterBoxEventCallbacks(customControl, dualListBoxData, shifterBoxControl, alreadyChecked)
+    alreadyChecked = alreadyChecked or false
     local shifterBoxSetupData = dualListBoxData.setupData
-    if not checkShifterBoxValid(customControl, shifterBoxSetupData, false) then return end
-
-    local boxName = shifterBoxSetupData.name
-    local shifterBoxData = libShifterBoxes[boxName]
-    shifterBoxSetupData = shifterBoxSetupData or shifterBoxData.shifterBoxSetupData
-    if not shifterBoxSetupData then return end
-    shifterBoxControl = shifterBoxControl or shifterBoxData.shifterBoxControl
-    if not shifterBoxControl then return end
-
-    --Tell the custom control to auto-resize dependent on the dual list boxes size
-    customControl:SetResizeToFitDescendents(true)
-    --Re-Anchor to the custom control
-    shifterBoxControl:SetAnchor(TOPLEFT, customControl, TOPLEFT, 0, 0) -- will automatically call ClearAnchors
-    --Change the dimensions
-    local width = shifterBoxSetupData.width ~= nil and getDefaultValue(shifterBoxSetupData.width)
-    local height = shifterBoxSetupData.height ~= nil and getDefaultValue(shifterBoxSetupData.height)
-    height = zo_clamp(shifterBoxSetupData.minHeight, shifterBoxSetupData.maxHeigth)
-    shifterBoxControl:SetDimensions(width, height)
-
-
-
-    --Add the entries to the left and right shifter boxes
-    -->Currently not needed. Use shifterBoxSetupData.leftListDefaultKeys and shifterBoxSetupData.rightListDefaultKeys
-    --updateLibShifterBoxEntries(customControl, shifterBoxSetupData, shifterBoxControl)
-
-    --Update the enabled state of the shifter box
-    updateLibShifterBoxState(customControl, shifterBoxSetupData, shifterBoxControl)
-
+    if alreadyChecked == false and not checkShifterBoxValid(customControl, shifterBoxSetupData, false) then return end
 
     --Add the callback functions, if provided
     local customSettings = shifterBoxSetupData.customSettings
+    if not customSettings then return end
+
     local callbackRegister = customSettings.callbackRegister
-    shifterBoxControl.LAMduallistBox_EventCallbacks = {}
-    local LAMduallistBox_EventCallbacks = shifterBoxControl.LAMduallistBox_EventCallbacks
     if callbackRegister ~= nil then
+        shifterBoxControl.LAMduallistBox_EventCallbacks = {}
+        local LAMduallistBox_EventCallbacks = shifterBoxControl.LAMduallistBox_EventCallbacks
+
         --Add the callback as he left list was created
         if callbackRegister.EVENT_LEFT_LIST_CREATED then
             shifterBoxControl:RegisterCallback(LSB.EVENT_LEFT_LIST_CREATED,             myShifterBoxEventLeftListCreatedCallbackFunction)
@@ -521,6 +539,41 @@ local function updateLibShifterBox(customControl, dualListBoxData, shifterBoxCon
     end
 end
 
+
+local function updateLibShifterBox(customControl, dualListBoxData, shifterBoxControl)
+    local shifterBoxSetupData = dualListBoxData.setupData
+    if not checkShifterBoxValid(customControl, shifterBoxSetupData, false) then return end
+
+    local boxName = shifterBoxSetupData.name
+    local shifterBoxData = libShifterBoxes[boxName]
+    shifterBoxSetupData = shifterBoxSetupData or shifterBoxData.shifterBoxSetupData
+    if not shifterBoxSetupData then return end
+    shifterBoxControl = shifterBoxControl or shifterBoxData.shifterBoxControl
+    if not shifterBoxControl then return end
+
+    --Tell the custom control to auto-resize dependent on the dual list boxes size
+    customControl:SetResizeToFitDescendents(true)
+    --Re-Anchor to the custom control
+    shifterBoxControl:SetAnchor(TOPLEFT, customControl, TOPLEFT, 0, 0) -- will automatically call ClearAnchors
+    --Change the dimensions
+    local width = shifterBoxSetupData.width ~= nil and getDefaultValue(shifterBoxSetupData.width)
+    local newWidth = zo_clamp(width, shifterBoxSetupData.minWidth, MAX_WIDTH)
+    local height = (shifterBoxSetupData.height ~= nil and getDefaultValue(shifterBoxSetupData.height)) or MIN_HEIGHT
+    local newHeight = zo_clamp(height, shifterBoxSetupData.minHeight, shifterBoxSetupData.maxHeigth)
+    shifterBoxControl:SetDimensions(newWidth, newHeight)
+
+
+    --Add the entries to the left and right shifter boxes
+    -->Currently not needed. Use shifterBoxSetupData.leftListDefaultKeys and shifterBoxSetupData.rightListDefaultKeys
+    --updateLibShifterBoxEntries(customControl, shifterBoxSetupData, shifterBoxControl)
+
+    --Upate the EVENT callback functions of the shifter box
+    updateLibShifterBoxEventCallbacks(customControl, dualListBoxData, shifterBoxControl, true)
+
+    --Update the enabled state of the shifter box
+    updateLibShifterBoxState(customControl, dualListBoxData, shifterBoxControl, true)
+end
+
 ------------------------------------------------------------------------------------------------------------------------
 
 --Create a LibShifterBox for e.g. LAM settings panel
@@ -551,6 +604,8 @@ local function createLibShifterBox(customControl, dualListBoxData)
             shifterBoxSetupData.rightListDefaultKeys    --rightListEntries
     )
     if shifterBox ~= nil then
+        shifterBox.boxName = boxName
+
         libShifterBoxes[boxName] = {}
         libShifterBoxes[boxName].name =                 boxName
         libShifterBoxes[boxName].dualListBoxData =      dualListBoxData
@@ -590,25 +645,29 @@ function LAMCreateControl.duallistbox(parent, dualListBoxData, controlName)
     local width = control:GetWidth()
     control:SetResizeToFitDescendents(true)
 
-    local minHeight = (control.data.minHeight and getDefaultValue(control.data.minHeight)) or MIN_HEIGHT
-    local maxHeight = (control.data.maxHeight and getDefaultValue(control.data.maxHeight)) or (minHeight * 4)
+    local data = control.data
+    local minHeight = (data.minHeight and getDefaultValue(data.minHeight)) or MIN_HEIGHT
+    local maxHeight = (data.maxHeight and getDefaultValue(data.maxHeight)) or (minHeight * 4)
 
     if control.isHalfWidth then --note these restrictions
         control:SetDimensionConstraints(width / 2, minHeight, width / 2, maxHeight)
     else
         control:SetDimensionConstraints(width, minHeight, width, maxHeight)
     end
+    MAX_WIDTH = control:GetWidth()
 
     control.UpdateValue = UpdateValue
 
-    LAM.util.RegisterForRefreshIfNeeded(control)
-
+    --Create the LibShifterBox dual list boxes (left and right)
     local dualListBoxControl = createFunc(parent, control, dualListBoxData)
     if dualListBoxControl == nil then
         d(strfor(errorPrefix.." - Widget %q did not create the dual list boxes for control %q", tos(widgetName), tos(control:GetName())))
         return
     end
     control.dualListBox = dualListBoxControl
+
+    LAM.util.RegisterForRefreshIfNeeded(control)
+
     return control
 end
 
