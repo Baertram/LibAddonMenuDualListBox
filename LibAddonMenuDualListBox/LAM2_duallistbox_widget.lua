@@ -5,6 +5,7 @@
     width = "full", -- or "half" (optional)
     minHeight = function() return db.minHeightNumber end, --or number for the minimum height of this control. Default: 26 (optional)
     maxHeight = function() return db.maxHeightNumber end, --or number for the maximum height of this control. Default: 4 * minHeight (optional)
+    disabled  = false,    --boolean value or function returning a boolean to tell if the dual list box widget is disabled (default = false). (optional)
 --======================================================================================================================
     -- -v- The dual lists setup data                                                                                -v-
 --======================================================================================================================
@@ -13,7 +14,6 @@
         name = "LAM_DUALLISTBOX_EXAMPLE1",
         width       = 580,      --number or function returning a number for the width of both list boxes together. If > the width of the LAM control container then the width willbe the LAM control container's width.
         height      = 200,      --number or function returning a number for the height of both list boxes together. minHeight of the LAM control needs to be >= this value! If > maxHeight then maxHeight of the LAM contro will be used
-        disabled    = false,    --boolean value or function returning a boolean to tell if the dual list box widget is disabled (default = false)? (optional)
 
 --======================================================================================================================
     ----  -v- The custom settings for the dual lists                                                            -v-
@@ -748,7 +748,7 @@ end
 
 
 function LAMCreateControl.duallistbox(parent, dualListBoxData, controlName)
-    if dualListBoxData.listsSetup == nil then return end
+    if dualListBoxData.setupData == nil then return end
     dualListBoxData.disabled = dualListBoxData.disabled or false
 
     local control = LAM.util.CreateBaseControl(parent, dualListBoxData, controlName)
@@ -799,7 +799,7 @@ end
 
 --Load the widget into LAM
 local eventAddOnLoadedForWidgetName = widgetName .. "_EVENT_ADD_ON_LOADED"
-local function registerWidget(eventId, addonName)
+local function registerWidget(_, addonName)
     if addonName ~= widgetName then return end
     em:UnregisterForEvent(eventAddOnLoadedForWidgetName, EVENT_ADD_ON_LOADED)
 
