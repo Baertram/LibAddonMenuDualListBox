@@ -281,11 +281,14 @@ end
 
 local function UpdateDisabled(control)
     local disable = getDefaultValue(control.data.disabled)
+    --[[
+    --No label given!
     if disable == true then
         control.label:SetColor(ZO_DEFAULT_DISABLED_COLOR:UnpackRGBA())
     else
         control.label:SetColor(ZO_DEFAULT_ENABLED_COLOR:UnpackRGBA())
     end
+    ]]
     if control.dualListBox ~= nil then
         updateLibShifterBoxEnabledState(control, control.dualListBox, not disable)
     end
