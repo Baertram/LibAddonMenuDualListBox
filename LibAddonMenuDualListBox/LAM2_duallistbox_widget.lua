@@ -1,6 +1,6 @@
 --[[dualListBoxData = {
     type = "duallistbox",
-    reference = "MyAddonCustomControl", -- unique name for your control to use as reference (optional) The <reference>.dualListBox is the direct reference to the dual list box control then
+    reference = "MyAddonDualListBox1", -- unique name for your control to use as reference (optional) The <reference>.dualListBox is the direct reference to the dual list box control then
     refreshFunc = function(customControl) end, -- function to call when panel/controls refresh (optional)
     width = "full", -- or "half" (optional)
     minHeight = function() return db.minHeightNumber end, --or number for the minimum height of this control. Default: 26 (optional)
@@ -34,7 +34,7 @@
                 rowTemplateName = "ShifterBoxEntryTemplate",        -- an individual XML (cirtual) control can be provided for the rows/entries (default = "ShifterBoxEntryTemplate"). (optional)
                 emptyListText = GetString(LIBSHIFTERBOX_EMPTY),     -- the text to be displayed if there are no entries left in the list (default = GetString(LIBSHIFTERBOX_EMPTY)). (optional)
                 fontSize = 18,                                      -- size of the font (default = 18). (optional)
-                rowDataTypeSelectSound = SOUNDS.ABILITY_SLOTTED,    -- an optional sound to play when a row of this data type is selected (default = SOUNDS.ABILITY_SLOTTED). (optional)
+                rowDataTypeSelectSound = SOUNDS.ABILITY_SLOTTED,    -- an optional String for an internal soundName to play when a row of this data type is selected (default = SOUNDS.ABILITY_SLOTTED). (optional)
                 rowOnMouseRightClick = function(rowControl, data)   -- an optional callback function when a right-click is done inside a row element (e.g. for custom context menus) (optional)
                     d("LSB: OnMouseRightClick: "..tostring(data.tooltipText))   -- reading custom 'tooltipText' from 'rowSetupAdditionalDataCallback'
                 end,
@@ -104,16 +104,14 @@ local wm = WINDOW_MANAGER
 local cm = CALLBACK_MANAGER
 
 local tos = tostring
-local tins = table.insert
-local tsort = table.sort
 local strfor = string.format
-local strformat = string.format
-
+local zocl = zo_clamp
 
 if not LAM:RegisterWidget("duallistbox", widgetVersion) then return end
 
 
 local MIN_HEIGHT = 26
+local MIN_WIDTH = 50
 local MAX_WIDTH = 0
 
 
@@ -666,9 +664,12 @@ local function updateLibShifterBox(customControl, dualListBoxData, shifterBoxCon
     shifterBoxControl:SetAnchor(TOPLEFT, customControl, TOPLEFT, 0, 0) -- will automatically call ClearAnchors
     --Change the dimensions
     local width = shifterBoxSetupData.width ~= nil and getDefaultValue(shifterBoxSetupData.width)
-    local newWidth = zo_clamp(width, shifterBoxSetupData.minWidth, MAX_WIDTH)
-    local height = (shifterBoxSetupData.height ~= nil and getDefaultValue(shifterBoxSetupData.height)) or MIN_HEIGHT
-    local newHeight = zo_clamp(height, shifterBoxSetupData.minHeight, shifterBoxSetupData.maxHeigth)
+    local newWidth = zocl(width, MIN_WIDTH, MAX_WIDTH - 1)
+
+    local height =    (shifterBoxSetupData.height ~= nil    and getDefaultValue(shifterBoxSetupData.height)) or MIN_HEIGHT
+    local minHeight = (dualListBoxData.minHeight ~= nil and getDefaultValue(dualListBoxData.minHeight)) or MIN_HEIGHT
+    local maxHeight = (dualListBoxData.maxHeight ~= nil and getDefaultValue(dualListBoxData.maxHeight)) or (minHeight * 4)
+    local newHeight = zocl(height, minHeight, maxHeight)
     shifterBoxControl:SetDimensions(newWidth, newHeight)
 
 
