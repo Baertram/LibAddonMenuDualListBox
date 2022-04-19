@@ -815,6 +815,6 @@ local function registerWidget(eventId, addonName)
     --Assign the local callback functions to the eventNames, inside table myShifterBoxLocalEventFunctions
     assignLocalCallbackFunctionsToEventNames()
 
-    if not LAM:RegisterWidget("soundslider", widgetVersion) then return end
+    if not LAM:RegisterWidget("duallistbox", widgetVersion) then return end
 end
 em:RegisterForEvent(eventAddOnLoadedForWidgetName, EVENT_ADD_ON_LOADED, registerWidget)
