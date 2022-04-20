@@ -221,7 +221,8 @@ local function checkAndUpdateRightListDefaultEntries(shifterBox, rightListEntrie
 end
 ]]
 
-local getFuncInProgress = false
+local getFuncInProgress            = false
+local updateValuesCallFromCreation = false
 local function updateLibShifterBoxEntries(customControl, dualListBoxData, shifterBoxControl, isLeftList, newValues)
 d("[LAM2 dualListBox widget]updateLibShifterBoxEntries - isLeftList: " ..tos(isLeftList) .. ", newValues: " ..tos(newValues))
     local shifterBoxSetupData = dualListBoxData.setupData
@@ -238,7 +239,12 @@ d("[LAM2 dualListBox widget]updateLibShifterBoxEntries - isLeftList: " ..tos(isL
     if not shifterBoxControl then return end
 
     --Force defaults?
-    local forceDefaults = (newValues == nil and true) or false
+    local newValuesAreNil = newValues == nil
+    local forceDefaults = ( (
+                            (updateValuesCallFromCreation == true and newValuesAreNil == true)
+                            or (not updateValuesCallFromCreation and newValuesAreNil == true)
+                            ) and true
+                          ) or false
     local leftListEntries, rightListEntries
 
     --Use default left list entries or nothing provided?
@@ -329,23 +335,24 @@ end
 local function UpdateBothLists(control, forceDefault, values)
 d("[LAM2 dualListBox widget]UpdateBothLists - forceDefault: " ..tos(forceDefault) .. ", values: " ..tos(values))
     if forceDefault == true then --if we are forcing defaults
+d(">force to defaults")
         UpdateLeftListValues(control, nil)
         UpdateRightListValues(control, nil)
     elseif values ~= nil then --update the values via the setFuncLeftList and setFuncRightList now and refresh the LAM control afterwards
+d(">set to SV")
         UpdateLeftListValues(control, values)
         UpdateRightListValues(control, values)
     else --get the list values from SV via getFuncLeftList and getFuncRightList
+d(">get from SV")
         getFuncInProgress = true --suppres refresh of the customControl via LAM refresh handlers
+
         local data = control.data
         --Get the values
         local valuesLeft =  data.getFuncLeftList()
-        valuesLeft = valuesLeft or {}
         local valuesRight = data.getFuncRightList()
-        valuesRight = valuesRight or {}
-        --Update the lists
+        --Update the list entries. If the values are empty: Use the defaults on 1st call
         UpdateLeftListValues(control, valuesLeft)
         UpdateRightListValues(control, valuesRight)
-
         getFuncInProgress = false
     end
 end
@@ -722,7 +729,9 @@ function LAMCreateControl.duallistbox(parent, dualListBoxData, controlName)
     --Set functions with updating the SavedVariables (w/ calling the setFuncLeftList AND setFuncRightList)
     control.UpdateValue =           UpdateBothLists
     --Use the getFuncs to set the values from the SavedVariables of the addon now
+    updateValuesCallFromCreation = true
     control:UpdateValue()
+    updateValuesCallFromCreation = false
 
     --Left list/right list entries handling
     control.UpdateLeftListValues =  UpdateLeftListValues
