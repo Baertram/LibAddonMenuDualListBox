@@ -6,6 +6,13 @@
     minHeight = function() return db.minHeightNumber end, --or number for the minimum height of this control. Default: 26 (optional)
     maxHeight = function() return db.maxHeightNumber end, --or number for the maximum height of this control. Default: 4 * minHeight (optional)
     disabled  = false,    --boolean value or function returning a boolean to tell if the dual list box widget is disabled (default = false). (optional)
+    getFuncLeftList = function() return db.leftListTable end -- returning a table of the left list entries,
+    getFuncRightList = function() return db.rightListTable end -- returning a table of the right list entries,
+    setFuncLeftList = function(var) db.leftListTable = var doStuff() end -- Saving a table for the left list entries,
+    setFuncRightList = function(var) db.rightListTable = var doStuff() end -- Saving a table for the right list entries,
+    defaultLeftList =  { ["test"] = "Test", "[test2"] = "Test2"}, --table or function returning a table with the default entries at the left list (optional). Left and right list's keys must be unique in total!
+    defaultRightList = { [1] = "Value1", [2] = "Value2" }, --table or function returning a table with the default entries at the right list (optional). Left and right list's keys must be unique in total!
+
 --======================================================================================================================
     -- -v- The dual lists setup data                                                                                -v-
 --======================================================================================================================
@@ -73,13 +80,6 @@
             }
         },
 
---======================================================================================================================
-        --Default keys at the lists
-        leftListDefaultKeys = { --table or function returning a table with the default keys at the left list (optional). Left and right list's keys must be unique in total!
-        },
-        rightListDefaultKeys = { --table or function returning a table with the  default keys at the right list (optional). Left and right list's keys must be unique in total!
-            "Value1", "Value2",
-        },
 --======================================================================================================================
     ----  -^- The custom settings for the dual lists                                                            -^-
 --======================================================================================================================
@@ -209,7 +209,7 @@ end
 
 ------------------------------------------------------------------------------------------------------------------------
 
-
+--[[
 local function checkAndUpdateRightListDefaultEntries(shifterBox, rightListEntries, shifterBoxData)
     if shifterBox and rightListEntries and NonContiguousCount(rightListEntries) == 0 then
         --d("Right list is empty!")
@@ -219,13 +219,17 @@ local function checkAndUpdateRightListDefaultEntries(shifterBox, rightListEntrie
         end
     end
 end
+]]
 
-
+local getFuncInProgress = false
 local function updateLibShifterBoxEntries(customControl, dualListBoxData, shifterBoxControl, isLeftList, newValues)
+d("[LAM2 dualListBox widget]updateLibShifterBoxEntries - isLeftList: " ..tos(isLeftList) .. ", newValues: " ..tos(newValues))
     local shifterBoxSetupData = dualListBoxData.setupData
     if not checkShifterBoxValid(customControl, shifterBoxSetupData, false) then return end
 
     isLeftList = isLeftList or false
+    local refreshControlNow = false
+
     local boxName = shifterBoxSetupData.name
     local shifterBoxData = libShifterBoxes[boxName]
     shifterBoxSetupData = shifterBoxSetupData or shifterBoxData.shifterBoxSetupData
@@ -238,13 +242,13 @@ local function updateLibShifterBoxEntries(customControl, dualListBoxData, shifte
     local leftListEntries, rightListEntries
 
     --Use default left list entries or nothing provided?
-    if forceDefaults == true then
+    if forceDefaults == true and not getFuncInProgress then
         if isLeftList == true and shifterBoxSetupData.leftListDefaultKeys ~= nil then
-            leftListEntries = getDefaultValue(shifterBoxSetupData.leftListDefaultKeys)
+            leftListEntries = getDefaultValue(shifterBoxSetupData.defaultLeftList)
             leftListEntries = leftListEntries or {}
 
         elseif not isLeftList and shifterBoxSetupData.rightListDefaultKeys ~= nil then
-            rightListEntries = getDefaultValue(shifterBoxSetupData.rightListDefaultKeys)
+            rightListEntries = getDefaultValue(shifterBoxSetupData.defaultRightList)
             rightListEntries = rightListEntries or {}
         end
     else
@@ -259,16 +263,26 @@ local function updateLibShifterBoxEntries(customControl, dualListBoxData, shifte
     if isLeftList == true then
         shifterBoxControl:ClearLeftList()
         shifterBoxControl:AddEntriesToLeftList(leftListEntries)
+        dualListBoxData.setFuncLeftList(leftListEntries)
+        refreshControlNow = true
     else
         shifterBoxControl:ClearRightList()
         shifterBoxControl:AddEntriesToRightList(rightListEntries)
+        dualListBoxData.setFuncRightList(rightListEntries)
+        refreshControlNow = true
     end
     --Check for empty right list? fill up with default values again
     --checkAndUpdateRightListDefaultEntries(shifterBoxControl, rightListEntries, shifterBoxData)
+d(">forceDefaults: " .. tos(forceDefaults) .. ", getFuncInProgress: " .. tos(getFuncInProgress) .. ", refreshControlNow: " .. tos(refreshControlNow))
+
+    if refreshControlNow and not getFuncInProgress then
+        util.RequestRefreshIfNeeded(customControl)
+    end
 end
 
 
 local function updateLibShifterBoxEnabledState(customControl, shifterBoxControl, isEnabled)
+d("[LAM2 dualListBox widget]updateLibShifterBoxEnabledState - isEnabled: " ..tos(isEnabled))
     if not customControl then return end
     if not shifterBoxControl then return end
 
@@ -280,30 +294,16 @@ end
 
 
 local function UpdateDisabled(control)
-    local disable = getDefaultValue(control.data.disabled)
-    --[[
-    --No label given!
-    if disable == true then
-        control.label:SetColor(ZO_DEFAULT_DISABLED_COLOR:UnpackRGBA())
-    else
-        control.label:SetColor(ZO_DEFAULT_ENABLED_COLOR:UnpackRGBA())
-    end
-    ]]
     if control.dualListBox ~= nil then
+        local disable = getDefaultValue(control.data.disabled)
+d("[LAM2 dualListBox widget]UpdateDisabled - disable: " ..tos(disable))
         updateLibShifterBoxEnabledState(control, control.dualListBox, not disable)
     end
 end
 
 
-local function UpdateValue(control)
-    if control.data.refreshFunc then
-        control.data.refreshFunc(control)
-    end
-end
-
-
-local function UpdateValues(control, isLeftList, newValues)
-d("[LAM2 dualListBox widget]UpdateValues")
+local function UpdateValuesAtList(control, isLeftList, newValues)
+d("[LAM2 dualListBox widget]UpdateValuesAtList - isLeftList: " ..tos(isLeftList))
     local shifterBoxControl = control.dualListBox
     if not shifterBoxControl then return false end
 
@@ -311,19 +311,44 @@ d("[LAM2 dualListBox widget]UpdateValues")
 
     --customControl, dualListBoxData, shifterBoxControl, isLeftList, newValues
     updateLibShifterBoxEntries(control, control.data, shifterBoxControl, isLeftList, newValuesTable)
-    UpdateValue(control)
 end
 
 
 local function UpdateLeftListValues(control, values)
-    UpdateValues(control, true, values)
+d("[LAM2 dualListBox widget]UpdateLeftListValues")
+    UpdateValuesAtList(control, true, values)
 end
 
 
 local function UpdateRightListValues(control, values)
-    UpdateValues(control, false, values)
+d("[LAM2 dualListBox widget]UpdateRightListValues")
+    UpdateValuesAtList(control, false, values)
 end
 
+
+local function UpdateBothLists(control, forceDefault, values)
+d("[LAM2 dualListBox widget]UpdateBothLists - forceDefault: " ..tos(forceDefault) .. ", values: " ..tos(values))
+    if forceDefault == true then --if we are forcing defaults
+        UpdateLeftListValues(control, nil)
+        UpdateRightListValues(control, nil)
+    elseif values ~= nil then --update the values via the setFuncLeftList and setFuncRightList now and refresh the LAM control afterwards
+        UpdateLeftListValues(control, values)
+        UpdateRightListValues(control, values)
+    else --get the list values from SV via getFuncLeftList and getFuncRightList
+        getFuncInProgress = true --suppres refresh of the customControl via LAM refresh handlers
+        local data = control.data
+        --Get the values
+        local valuesLeft =  data.getFuncLeftList()
+        valuesLeft = valuesLeft or {}
+        local valuesRight = data.getFuncRightList()
+        valuesRight = valuesRight or {}
+        --Update the lists
+        UpdateLeftListValues(control, valuesLeft)
+        UpdateRightListValues(control, valuesRight)
+
+        getFuncInProgress = false
+    end
+end
 
 ------------------------------------------------------------------------------------------------------------------------
 -- LibShifterBox - Event callback functions
@@ -583,8 +608,8 @@ local function createLibShifterBox(customControl, dualListBoxData)
             shifterBoxSetupData.customSettings,         --customSettings
             nil,                                        --dimensionOptions
             nil,                                        --anchorOptions
-            shifterBoxSetupData.leftListDefaultKeys,    --leftListEntries
-            shifterBoxSetupData.rightListDefaultKeys    --rightListEntries
+            nil, --shifterBoxSetupData.defaultLeftList -> updated via control:UpdateValue(),        --leftListEntries
+            nil  --shifterBoxSetupData.defaultRightList -> updated via control:UpdateValue(),       --rightListEntries
     )
     if shifterBox ~= nil then
         shifterBox.boxName = boxName
@@ -652,12 +677,14 @@ function LAMCreateControl.duallistbox(parent, dualListBoxData, controlName)
     LAM.util.RegisterForRefreshIfNeeded(control)
 
     --Get functions
-    control.GetLeftListEntries = getLeftListEntriesFull
-    control.GetRightListEntries = getRightListEntriesFull
+    control.GetLeftListEntries =    getLeftListEntriesFull
+    control.GetRightListEntries =   getRightListEntriesFull
 
     --Set functions
     --Only for the refresh
-    control.UpdateValue = UpdateValue
+    control.UpdateValue =           UpdateBothLists
+    --Use the getFuncs to set the values from the SavedVariables of the addon now
+    control:UpdateValue()
 
     --Left list/right list entries handling
     control.UpdateLeftListValues =  UpdateLeftListValues
