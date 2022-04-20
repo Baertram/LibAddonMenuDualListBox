@@ -10,8 +10,8 @@
     getFuncRightList = function() return db.rightListTable end -- returning a table of the right list entries,
     setFuncLeftList = function(var) db.leftListTable = var doStuff() end -- Saving a table for the left list entries,
     setFuncRightList = function(var) db.rightListTable = var doStuff() end -- Saving a table for the right list entries,
-    defaultLeftList =  { ["test"] = "Test", ["test2"] = "Test2"}, --table or function returning a table with the default entries at the left list (optional). Left and right list's keys must be unique in total!
-    defaultRightList = { [1] = "Value1", [2] = "Value2" }, --table or function returning a table with the default entries at the right list (optional). Left and right list's keys must be unique in total!
+    defaultLeftList =  { [1] = "Test", [2] = "Test2"}, --table or function returning a table with the default entries at the left list (optional). Left and right list's keys must be unique in total!
+    defaultRightList = { [3] = "Value1", [4] = "Value2" }, --table or function returning a table with the default entries at the right list (optional). Left and right list's keys must be unique in total!
 
 --======================================================================================================================
     -- -v- The dual lists setup data                                                                                -v-
