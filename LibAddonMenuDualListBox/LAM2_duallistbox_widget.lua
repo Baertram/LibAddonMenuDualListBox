@@ -381,21 +381,33 @@ local function assignLocalCallbackFunctionsToEventNames()
     [21] = "EVENT_RIGHT_LIST_ROW_ON_DRAG_END",
 ]]
 
+    --The event_entry_moved function callback will always be registered and added to call control:UupdateValue() and save the changed data to the SV
+    myShifterBoxLocalEventFunctions[widgetName .. "_" .. LSB.EVENT_ENTRY_MOVED] = function(shifterBox, key, value, categoryId, isToListLeftList, fromList, toList)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+        if shifterBoxData.lamCustomControl ~= nil then
+           shifterBoxData.lamCustomControl:UpdateValue()
+        end
+    end
+
+    --Standard event entry moved callback function for other addons
+    myShifterBoxLocalEventFunctions[LSB.EVENT_ENTRY_MOVED] = function(shifterBox, key, value, categoryId, isToListLeftList, fromList, toList)
+        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+        if not boxName or not shifterBoxData then return end
+        --todo Call custom function of the addon?
+    end
+
+
+    --All other events:
     myShifterBoxLocalEventFunctions[LSB.EVENT_ENTRY_HIGHLIGHTED] = function(selectedRow, shifterBox, key, value, categoryId, isLeftList)
         local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
         if not boxName or not shifterBoxData or not key then return end
-
     end
 
     myShifterBoxLocalEventFunctions[LSB.EVENT_ENTRY_UNHIGHLIGHTED] = function(selectedRow, shifterBox, key, value, categoryId, isLeftList)
         local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
         if not boxName or not shifterBoxData or not key then return end
 
-    end
-
-    myShifterBoxLocalEventFunctions[LSB.EVENT_ENTRY_MOVED] = function(shifterBox, key, value, categoryId, isToListLeftList, fromList, toList)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
     end
 
     myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_CLEARED] = function(shifterBox)
@@ -495,28 +507,64 @@ local function updateLibShifterBoxEventCallbacks(customControl, dualListBoxData,
     local shifterBoxSetupData = dualListBoxData.setupData
     if alreadyChecked == false and not checkShifterBoxValid(customControl, shifterBoxSetupData, false) then return end
 
+    shifterBoxControl.LAMduallistBox_EventCallbacks = {}
+    local LAMduallistBox_EventCallbacks = shifterBoxControl.LAMduallistBox_EventCallbacks
+
+    --Always register the EVENT_ENTRY_MOVED with the internal callback function
+    local entryMovedEventId = LSB.EVENT_ENTRY_MOVED
+    local callbackFuncForEVENT_ENTRY_MOVED = myShifterBoxLocalEventFunctions[widgetName .. "_" .. entryMovedEventId]
+    if callbackFuncForEVENT_ENTRY_MOVED ~= nil then
+        shifterBoxControl:RegisterCallback(entryMovedEventId, callbackFuncForEVENT_ENTRY_MOVED)
+        --Better readability at the control
+        LAMduallistBox_EventCallbacks[entryMovedEventId] = {
+            eventId =   entryMovedEventId,
+            eventName = libShifterBoxPossibleEventNames[entryMovedEventId],
+            callback =  callbackFuncForEVENT_ENTRY_MOVED
+        }
+    end
+
+    --All other events as per shifterBoxSetupData.customSettings.callbackRegister table
     --Add the callback functions, if provided
     local customSettings = shifterBoxSetupData.customSettings
     if not customSettings then return end
 
     local callbackRegister = customSettings.callbackRegister
     if callbackRegister ~= nil then
-        shifterBoxControl.LAMduallistBox_EventCallbacks = {}
-        local LAMduallistBox_EventCallbacks = shifterBoxControl.LAMduallistBox_EventCallbacks
 
         --Dynamic
         --Enable the callback functions if they are added to the customSettings of the LibShifterBox
         for eventId, eventName in ipairs(libShifterBoxPossibleEventNames) do
             if callbackRegister[eventId] ~= nil then
-                local callbackFuncForEventName = myShifterBoxLocalEventFunctions[eventId]
-                if callbackFuncForEventName ~= nil then
-                    shifterBoxControl:RegisterCallback(eventId, callbackFuncForEventName)
-                    --Better readability at the control
-                    LAMduallistBox_EventCallbacks[eventId] = {
-                        eventId =   eventId,
-                        eventName = eventName,
-                        callback =  callbackFuncForEventName
-                    }
+                if eventId ~= entryMovedEventId then
+                    local callbackFuncForEventName = myShifterBoxLocalEventFunctions[eventId]
+                    if callbackFuncForEventName ~= nil then
+                        shifterBoxControl:RegisterCallback(eventId, callbackFuncForEventName)
+                        --Better readability at the control
+                        LAMduallistBox_EventCallbacks[eventId] = {
+                            eventId =   eventId,
+                            eventName = eventName,
+                            callback =  callbackFuncForEventName
+                        }
+                    end
+                else
+                    --EVENT_ENTRY_MOVED already was regitered by default, so if another callback is provided we need to
+                    --PostHook our default callback function with that new callback function
+                    if callbackFuncForEVENT_ENTRY_MOVED ~= nil then
+                        local newEventEntryMovedCallbackFunc = myShifterBoxLocalEventFunctions[entryMovedEventId]
+                        if newEventEntryMovedCallbackFunc ~= nil then
+                            local origEventEntryMovedCallbackFunc = callbackFuncForEVENT_ENTRY_MOVED
+                            callbackFuncForEVENT_ENTRY_MOVED = function(...)
+                                origEventEntryMovedCallbackFunc(...)
+                                newEventEntryMovedCallbackFunc(...)
+                            end
+                            --Better readability at the control
+                            LAMduallistBox_EventCallbacks[entryMovedEventId] = {
+                                eventId =   entryMovedEventId,
+                                eventName = eventName,
+                                callback =  callbackFuncForEVENT_ENTRY_MOVED
+                            }
+                        end
+                    end
                 end
             end
         end
@@ -676,12 +724,11 @@ function LAMCreateControl.duallistbox(parent, dualListBoxData, controlName)
 
     LAM.util.RegisterForRefreshIfNeeded(control)
 
-    --Get functions
+    --Get functions, w/o updating the SavedVariables (w/o calling the getFuncLeftList or getFuncRightList)
     control.GetLeftListEntries =    getLeftListEntriesFull
     control.GetRightListEntries =   getRightListEntriesFull
 
-    --Set functions
-    --Only for the refresh
+    --Set functions with updating the SavedVariables (w/ calling the setFuncLeftList AND setFuncRightList)
     control.UpdateValue =           UpdateBothLists
     --Use the getFuncs to set the values from the SavedVariables of the addon now
     control:UpdateValue()
