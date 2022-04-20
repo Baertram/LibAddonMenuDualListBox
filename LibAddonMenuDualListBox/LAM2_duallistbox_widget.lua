@@ -354,150 +354,232 @@ end
 -- LibShifterBox - Event callback functions
 local function assignLocalCallbackFunctionsToEventNames()
     --Set the local event callback function for each event Id, inside table myShifterBoxLocalEventFunctions
---[[
-    --At date: 2022-04-19
-    -->LibShifterBox possible event ID = event name constant (e.g. LibShifterBox.EVENT_ENTRY_HIGHLIGHTED
-    -->See table LibShifterBox.allowedEventNames
-    [1]  = "EVENT_ENTRY_HIGHLIGHTED",
-    [2]  = "EVENT_ENTRY_UNHIGHLIGHTED",
-    [3]  = "EVENT_ENTRY_MOVED",
-    [4]  = "EVENT_LEFT_LIST_CLEARED",
-    [5]  = "EVENT_RIGHT_LIST_CLEARED",
-    [6]  = "EVENT_LEFT_LIST_ENTRY_ADDED",
-    [7]  = "EVENT_RIGHT_LIST_ENTRY_ADDED",
-    [8]  = "EVENT_LEFT_LIST_ENTRY_REMOVED",
-    [9]  = "EVENT_RIGHT_LIST_ENTRY_REMOVED",
-    [10] = "EVENT_LEFT_LIST_CREATED",
-    [11] = "EVENT_RIGHT_LIST_CREATED",
-    [12] = "EVENT_LEFT_LIST_ROW_ON_MOUSE_ENTER",
-    [13] = "EVENT_RIGHT_LIST_ROW_ON_MOUSE_ENTER",
-    [14] = "EVENT_LEFT_LIST_ROW_ON_MOUSE_EXIT",
-    [15] = "EVENT_RIGHT_LIST_ROW_ON_MOUSE_EXIT",
-    [16] = "EVENT_LEFT_LIST_ROW_ON_MOUSE_UP",
-    [17] = "EVENT_RIGHT_LIST_ROW_ON_MOUSE_UP",
-    [18] = "EVENT_LEFT_LIST_ROW_ON_DRAG_START",
-    [19] = "EVENT_RIGHT_LIST_ROW_ON_DRAG_START",
-    [20] = "EVENT_LEFT_LIST_ROW_ON_DRAG_END",
-    [21] = "EVENT_RIGHT_LIST_ROW_ON_DRAG_END",
-]]
+    --[[
+        --At date: 2022-04-19
+        -->LibShifterBox possible event ID = event name constant (e.g. LibShifterBox.EVENT_ENTRY_HIGHLIGHTED
+        -->See table LibShifterBox.allowedEventNames
+        [1]  = "EVENT_ENTRY_HIGHLIGHTED",
+        [2]  = "EVENT_ENTRY_UNHIGHLIGHTED",
+        [3]  = "EVENT_ENTRY_MOVED",
+        [4]  = "EVENT_LEFT_LIST_CLEARED",
+        [5]  = "EVENT_RIGHT_LIST_CLEARED",
+        [6]  = "EVENT_LEFT_LIST_ENTRY_ADDED",
+        [7]  = "EVENT_RIGHT_LIST_ENTRY_ADDED",
+        [8]  = "EVENT_LEFT_LIST_ENTRY_REMOVED",
+        [9]  = "EVENT_RIGHT_LIST_ENTRY_REMOVED",
+        [10] = "EVENT_LEFT_LIST_CREATED",
+        [11] = "EVENT_RIGHT_LIST_CREATED",
+        [12] = "EVENT_LEFT_LIST_ROW_ON_MOUSE_ENTER",
+        [13] = "EVENT_RIGHT_LIST_ROW_ON_MOUSE_ENTER",
+        [14] = "EVENT_LEFT_LIST_ROW_ON_MOUSE_EXIT",
+        [15] = "EVENT_RIGHT_LIST_ROW_ON_MOUSE_EXIT",
+        [16] = "EVENT_LEFT_LIST_ROW_ON_MOUSE_UP",
+        [17] = "EVENT_RIGHT_LIST_ROW_ON_MOUSE_UP",
+        [18] = "EVENT_LEFT_LIST_ROW_ON_DRAG_START",
+        [19] = "EVENT_RIGHT_LIST_ROW_ON_DRAG_START",
+        [20] = "EVENT_LEFT_LIST_ROW_ON_DRAG_END",
+        [21] = "EVENT_RIGHT_LIST_ROW_ON_DRAG_END",
+    ]]
 
     --The event_entry_moved function callback will always be registered and added to call control:UupdateValue() and save the changed data to the SV
     myShifterBoxLocalEventFunctions[widgetName .. "_" .. LSB.EVENT_ENTRY_MOVED] = function(shifterBox, key, value, categoryId, isToListLeftList, fromList, toList)
         local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
         if not boxName or not shifterBoxData then return end
         if shifterBoxData.lamCustomControl ~= nil then
-           shifterBoxData.lamCustomControl:UpdateValue()
+            shifterBoxData.lamCustomControl:UpdateValue()
         end
     end
 
     --Standard event entry moved callback function for other addons
-    myShifterBoxLocalEventFunctions[LSB.EVENT_ENTRY_MOVED] = function(shifterBox, key, value, categoryId, isToListLeftList, fromList, toList)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
-        --todo Call custom function of the addon?
+    myShifterBoxLocalEventFunctions[LSB.EVENT_ENTRY_MOVED] = function(customFunc, ...)
+        local function runNow(shifterBox, key, value, categoryId, isToListLeftList, fromList, toList)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
 
     --All other events:
-    myShifterBoxLocalEventFunctions[LSB.EVENT_ENTRY_HIGHLIGHTED] = function(selectedRow, shifterBox, key, value, categoryId, isLeftList)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData or not key then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_ENTRY_HIGHLIGHTED] = function(customFunc, ...)
+        local function runNow(selectedRow, shifterBox, key, value, categoryId, isLeftList)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData or not key then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_ENTRY_UNHIGHLIGHTED] = function(selectedRow, shifterBox, key, value, categoryId, isLeftList)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData or not key then return end
-
+    myShifterBoxLocalEventFunctions[LSB.EVENT_ENTRY_UNHIGHLIGHTED] = function (customFunc, ...)
+        local function runNow(selectedRow, shifterBox, key, value, categoryId, isLeftList)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData or not key then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_CLEARED] = function(shifterBox)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_CLEARED] = function (customFunc, ...)
+        local function runNow(shifterBox)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_CLEARED] = function(shifterBox)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_CLEARED] = function (customFunc, ...)
+        local function runNow(shifterBox)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ENTRY_ADDED] = function(shifterBox, list, entryAdded)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ENTRY_ADDED] = function (customFunc, ...)
+        local function runNow(shifterBox, list, entryAdded)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ENTRY_ADDED] = function(shifterBox, list, entryAdded)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ENTRY_ADDED] = function (customFunc, ...)
+        local function runNow(shifterBox, list, entryAdded)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ENTRY_REMOVED] = function(shifterBox, list, entryRemoved)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ENTRY_REMOVED] = function (customFunc, ...)
+        local function runNow(shifterBox, list, entryRemoved)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ENTRY_REMOVED] = function(shifterBox, list, entryRemoved)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ENTRY_REMOVED] = function (customFunc, ...)
+        local function runNow(shifterBox, list, entryRemoved)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_CREATED] = function(leftListControl, shifterBox)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_CREATED] = function (customFunc, ...)
+        local function runNow(leftListControl, shifterBox)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_CREATED] = function(rightListControl, shifterBox)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_CREATED] = function (customFunc, ...)
+        local function runNow(rightListControl, shifterBox)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_ENTER] = function(rowControl, shifterBox, rawRowData)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_ENTER] = function (customFunc, ...)
+        local function runNow(rowControl, shifterBox, rawRowData)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_ENTER] = function(rowControl, shifterBox, rawRowData)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_ENTER] = function (customFunc, ...)
+        local function runNow(rowControl, shifterBox, rawRowData)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_EXIT] = function(rowControl, shifterBox, rawRowData)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_EXIT] = function (customFunc, ...)
+        local function runNow(rowControl, shifterBox, rawRowData)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_EXIT] = function(rowControl, shifterBox, rawRowData)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_EXIT] = function (customFunc, ...)
+        local function runNow(rowControl, shifterBox, rawRowData)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_UP] = function(rowControl, shifterBox, mouseButton, isInside, altKey, shiftKey, commandKey, rawRowData)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ROW_ON_MOUSE_UP] = function (customFunc, ...)
+        local function runNow(rowControl, shifterBox, mouseButton, isInside, altKey, shiftKey, commandKey, rawRowData)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_UP] = function(rowControl, shifterBox, mouseButton, isInside, altKey, shiftKey, commandKey, rawRowData)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ROW_ON_MOUSE_UP] = function (customFunc, ...)
+        local function runNow(rowControl, shifterBox, mouseButton, isInside, altKey, shiftKey, commandKey, rawRowData)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_START] = function(draggedControl, shifterBox, mouseButton, rawDraggedRowData)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_START] = function (customFunc, ...)
+        local function runNow(draggedControl, shifterBox, mouseButton, rawDraggedRowData)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ROW_ON_DRAG_START] = function(draggedControl, shifterBox, mouseButton, rawDraggedRowData)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ROW_ON_DRAG_START] = function (customFunc, ...)
+        local function runNow(draggedControl, shifterBox, mouseButton, rawDraggedRowData)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_END] = function(draggedOnToControl, shifterBox, mouseButton, rawDraggedRowData, hasSameShifterBoxParent, wasDragSuccessful)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_LEFT_LIST_ROW_ON_DRAG_END] = function (customFunc, ...)
+        local function runNow(draggedOnToControl, shifterBox, mouseButton, rawDraggedRowData, hasSameShifterBoxParent, wasDragSuccessful)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 
-    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ROW_ON_DRAG_END] = function(draggedOnToControl, shifterBox, mouseButton, rawDraggedRowData, hasSameShifterBoxParent, wasDragSuccessful)
-        local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
-        if not boxName or not shifterBoxData then return end
+    myShifterBoxLocalEventFunctions[LSB.EVENT_RIGHT_LIST_ROW_ON_DRAG_END] = function(customFunc, ...)
+        local function runNow(draggedOnToControl, shifterBox, mouseButton, rawDraggedRowData, hasSameShifterBoxParent, wasDragSuccessful)
+            local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+            if not boxName or not shifterBoxData then return end
+            return customFunc(...)
+        end
+        return runNow(...)
     end
 end
 
@@ -534,7 +616,8 @@ local function updateLibShifterBoxEventCallbacks(customControl, dualListBoxData,
         --Dynamic
         --Enable the callback functions if they are added to the customSettings of the LibShifterBox
         for eventId, eventName in ipairs(libShifterBoxPossibleEventNames) do
-            if callbackRegister[eventId] ~= nil then
+            local callbackFuncForEventId = callbackRegister[eventId]
+            if callbackFuncForEventId ~= nil and type(callbackFuncForEventId) == "function" then
                 if eventId ~= entryMovedEventId then
                     local callbackFuncForEventName = myShifterBoxLocalEventFunctions[eventId]
                     if callbackFuncForEventName ~= nil then
