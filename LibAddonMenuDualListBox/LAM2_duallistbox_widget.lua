@@ -621,12 +621,16 @@ local function updateLibShifterBoxEventCallbacks(customControl, dualListBoxData,
                 if eventId ~= entryMovedEventId then
                     local callbackFuncForEventName = myShifterBoxLocalEventFunctions[eventId]
                     if callbackFuncForEventName ~= nil then
-                        shifterBoxControl:RegisterCallback(eventId, callbackFuncForEventName)
+                        local callbackFuncToUse = function(...) callbackFuncForEventName(callbackFuncForEventId, ...) end
+                        shifterBoxControl:RegisterCallback(
+                                eventId,
+                                callbackFuncToUse
+                        )
                         --Better readability at the control
                         LAMduallistBox_EventCallbacks[eventId] = {
                             eventId =   eventId,
                             eventName = eventName,
-                            callback =  callbackFuncForEventName
+                            callback =  callbackFuncToUse
                         }
                     end
                 else
@@ -638,7 +642,7 @@ local function updateLibShifterBoxEventCallbacks(customControl, dualListBoxData,
                             local origEventEntryMovedCallbackFunc = callbackFuncForEVENT_ENTRY_MOVED
                             callbackFuncForEVENT_ENTRY_MOVED = function(...)
                                 origEventEntryMovedCallbackFunc(...)
-                                newEventEntryMovedCallbackFunc(...)
+                                newEventEntryMovedCallbackFunc(callbackFuncForEventId, ...)
                             end
                             --Better readability at the control
                             LAMduallistBox_EventCallbacks[entryMovedEventId] = {
