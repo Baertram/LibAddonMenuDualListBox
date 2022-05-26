@@ -6,8 +6,8 @@
     minHeight = function() return db.minHeightNumber end, --or number for the minimum height of this control. Default: 26 (optional)
     maxHeight = function() return db.maxHeightNumber end, --or number for the maximum height of this control. Default: 4 * minHeight (optional)
     disabled  = false,    --boolean value or function returning a boolean to tell if the dual list box widget is disabled (default = false). (optional)
-    getFuncLeftList = function() return db.leftListTable end -- returning a table of the left list entries,
-    getFuncRightList = function() return db.rightListTable end -- returning a table of the right list entries,
+    getFuncLeftList = function() return db.leftListTable end -- returning a table of the left list entries. The table returned MUST BE CHANGABLE via this pointer!
+    getFuncRightList = function() return db.rightListTable end -- returning a table of the right list entries. The table returned MUST BE CHANGABLE via this pointer!
     setFuncLeftList = function(table) db.leftListTable = var doStuff() end -- Saving a table for the left list entries, where table uses a unique number (accross left & right list!) key and a String as value,
     setFuncRightList = function(table) db.rightListTable = var doStuff() end -- Saving a table for the right list entries, where table uses a unique number (accross left & right list!) key and a String as value,
     defaultLeftList =  { [1] = "Test", [2] = "Test2"}, --table or function returning a table with the default entries at the left list (optional). Left and right list's keys must be unique in total!
