@@ -8,8 +8,8 @@
     disabled  = false,    --boolean value or function returning a boolean to tell if the dual list box widget is disabled (default = false). (optional)
     getFuncLeftList = function() return db.leftListTable end -- returning a table of the left list entries,
     getFuncRightList = function() return db.rightListTable end -- returning a table of the right list entries,
-    setFuncLeftList = function(var) db.leftListTable = var doStuff() end -- Saving a table for the left list entries,
-    setFuncRightList = function(var) db.rightListTable = var doStuff() end -- Saving a table for the right list entries,
+    setFuncLeftList = function(table) db.leftListTable = var doStuff() end -- Saving a table for the left list entries, where table uses a unique number (accross left & right list!) key and a String as value,
+    setFuncRightList = function(table) db.rightListTable = var doStuff() end -- Saving a table for the right list entries, where table uses a unique number (accross left & right list!) key and a String as value,
     defaultLeftList =  { [1] = "Test", [2] = "Test2"}, --table or function returning a table with the default entries at the left list (optional). Left and right list's keys must be unique in total!
     defaultRightList = { [3] = "Value1", [4] = "Value2" }, --table or function returning a table with the default entries at the right list (optional). Left and right list's keys must be unique in total!
 
@@ -100,8 +100,6 @@ local util = LAM.util
 local getDefaultValue = util.GetDefaultValue
 
 local em = EVENT_MANAGER
-local wm = WINDOW_MANAGER
-local cm = CALLBACK_MANAGER
 
 local tos = tostring
 local strfor = string.format
@@ -189,23 +187,6 @@ local function checkShifterBoxValid(customControl, shifterBoxSetupData, newBox)
     return true
 end
 
-
-------------------------------------------------------------------------------------------------------------------------
-
-local function getLeftListEntriesFull(customControl)
-    if not customControl then return end
-    local shifterBox = customControl.dualListBoxData
-    if not shifterBox then return end
-    return shifterBox:GetLeftListEntriesFull()
-end
-
-
-local function getRightListEntriesFull(customControl)
-    if not customControl then return end
-    local shifterBox = customControl.dualListBoxData
-    if not shifterBox then return end
-    return shifterBox:GetRightListEntriesFull()
-end
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -331,6 +312,37 @@ d("[LAM2 dualListBox widget]UpdateRightListValues")
     UpdateValuesAtList(control, false, values)
 end
 
+local function UpdateListEntry(control, shifterBoxData, key, value, categoryId, isToLeftList, fromList, toList)
+d("[LAM2 dualListBox widget]UpdateListEntry - isLeft: " ..tos(isToLeftList) .. ", key: " ..tos(key) .. ", value: " ..tos(value))
+    if key ~= nil and value ~= nil then
+        local data = control.data
+        if isToLeftList == true then
+            --Update left list entry
+            --Get current entries at left list
+            local valuesLeft = data.getFuncLeftList()
+            --Add the new entry from right list
+            valuesLeft[key] = value
+            --Remove in right list SV
+            local valuesRight = data.getFuncRightList()
+            if valuesRight[key] ~= nil then valuesRight[key] = nil end
+LAM2_DLB = LAM2_DLB or {}
+LAM2_DLB.leftListSV = valuesLeft
+            UpdateValuesAtList(control, true, valuesLeft)
+        else
+            --Update right list entry
+            --Get current entries at right list
+            local valuesRight = data.getFuncRightList()
+            --Add the new entry from left list
+            valuesRight[key] = value
+            --Remove in left list SV
+            local valuesLeft = data.getFuncLeftList()
+            if valuesLeft[key] ~= nil then valuesLeft[key] = nil end
+LAM2_DLB = LAM2_DLB or {}
+LAM2_DLB.rightListSV = valuesRight
+            UpdateValuesAtList(control, false, valuesRight)
+        end
+    end
+end
 
 local function UpdateBothLists(control, forceDefault, values)
 d("[LAM2 dualListBox widget]UpdateBothLists - forceDefault: " ..tos(forceDefault) .. ", values: " ..tos(values))
@@ -350,6 +362,9 @@ d(">get from SV")
         --Get the values
         local valuesLeft =  data.getFuncLeftList()
         local valuesRight = data.getFuncRightList()
+LAM2_DLB = LAM2_DLB or {}
+LAM2_DLB.leftListSV = valuesLeft
+LAM2_DLB.rightListSV = valuesRight
         --Update the list entries. If the values are empty: Use the defaults on 1st call
         UpdateLeftListValues(control, valuesLeft)
         UpdateRightListValues(control, valuesRight)
@@ -396,13 +411,14 @@ local function assignLocalCallbackFunctionsToEventNames()
         [21] = "EVENT_RIGHT_LIST_ROW_ON_DRAG_END",
     ]]
 
-    --The event_entry_moved function callback will always be registered and added to call control:UupdateValue() and save the changed data to the SV
-    myShifterBoxLocalEventFunctions[widgetName .. "_" .. LSB.EVENT_ENTRY_MOVED] = function(shifterBox, key, value, categoryId, isToListLeftList, fromList, toList)
+    --The event_entry_moved function callback will always be registered and added to call control:UpdateValue(), and save the changed data to the SV
+    myShifterBoxLocalEventFunctions[widgetName .. "_" .. LSB.EVENT_ENTRY_MOVED] = function(shifterBox, key, value, categoryId, isToLeftList, fromList, toList)
         local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
+d(string.format("[LAM2 dualListBox widget]EVENT_ENTRY_MOVED -  boxName: %q, key: %s, value: %s, categoryId: %s, toLeft: %s", tos(boxName), tos(key),tos(value),tos(categoryId),tos(isToLeftList)))
         if not boxName or not shifterBoxData then return end
-        --Call the LAMcustomControl:UpdateValue() function to update the tables after the entries got moved
+        --Call the LAMcustomControl:UpdateListEntry() function to update the savedvariables tables as the entries got moved
         if shifterBoxData.lamCustomControl ~= nil then
-            shifterBoxData.lamCustomControl:UpdateValue()
+            shifterBoxData.lamCustomControl:UpdateListEntry(shifterBoxData, key, value, categoryId, isToLeftList, fromList, toList)
         end
     end
 
@@ -677,6 +693,28 @@ local function createLibShifterBox(customControl, dualListBoxData)
     end
 end
 
+
+------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------
+
+local function getLeftListEntriesFull(customControl)
+    if not customControl then return end
+    local shifterBox = customControl.dualListBoxData
+    if not shifterBox then return end
+    return shifterBox:GetLeftListEntriesFull()
+end
+
+
+local function getRightListEntriesFull(customControl)
+    if not customControl then return end
+    local shifterBox = customControl.dualListBoxData
+    if not shifterBox then return end
+    return shifterBox:GetRightListEntriesFull()
+end
+
+
+
 ------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------
@@ -726,11 +764,14 @@ function LAMCreateControl.duallistbox(parent, dualListBoxData, controlName)
     control.GetLeftListEntries =    getLeftListEntriesFull
     control.GetRightListEntries =   getRightListEntriesFull
 
-    --Set functions with updating the SavedVariables (w/ calling the setFuncLeftList AND setFuncRightList)
-    control.UpdateValue =           UpdateBothLists
+    --Set functions with updating the SavedVariables (w/ calling the setFuncLeftList AND setFuncRightList -> Called from)
+    control.UpdateValue = UpdateBothLists
+    control.UpdateListEntry = UpdateListEntry --Update a single entry at a specified list
+
     --Use the getFuncs to set the values from the SavedVariables of the addon now
+    -->Set variable updateValuesCallFromCreation to true to prevent a "set to defaults values"!
     updateValuesCallFromCreation = true
-    control:UpdateValue()
+    control:UpdateValue() --will call UpdateBothLists() to init the variables in both lists
     updateValuesCallFromCreation = false
 
     --Left list/right list entries handling
