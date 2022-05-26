@@ -95,6 +95,7 @@ local errorPrefix = "[LibAddonMenu]ERROR"
 
 local LAM = LibAddonMenu2
 local LSB = LibShifterBox --will be updated at EVENT_ADD_ON_LOADED again
+local entryMovedEventId = LSB.EVENT_ENTRY_MOVED
 
 local util = LAM.util
 local getDefaultValue = util.GetDefaultValue
@@ -312,6 +313,8 @@ d("[LAM2 dualListBox widget]UpdateRightListValues")
     UpdateValuesAtList(control, false, values)
 end
 
+--Will be called as the event LibShifterBox.EVENT_ENTRY_MOVED was raised for each moved item
+-->Uses the getFunc of left/right list to get the SavedVariables table and update the entries
 local function UpdateListEntry(control, shifterBoxData, key, value, categoryId, isToLeftList, fromList, toList)
 d("[LAM2 dualListBox widget]UpdateListEntry - isLeft: " ..tos(isToLeftList) .. ", key: " ..tos(key) .. ", value: " ..tos(value))
     if key ~= nil and value ~= nil then
@@ -411,8 +414,8 @@ local function assignLocalCallbackFunctionsToEventNames()
         [21] = "EVENT_RIGHT_LIST_ROW_ON_DRAG_END",
     ]]
 
-    --The event_entry_moved function callback will always be registered and added to call control:UpdateValue(), and save the changed data to the SV
-    myShifterBoxLocalEventFunctions[widgetName .. "_" .. LSB.EVENT_ENTRY_MOVED] = function(shifterBox, key, value, categoryId, isToLeftList, fromList, toList)
+    --The event_entry_moved function callback will always be registered and added to call control:UpdateListEntry(), and save the changed entry to the SV of left and right lists
+    myShifterBoxLocalEventFunctions[widgetName .. "_" .. entryMovedEventId] = function(shifterBox, key, value, categoryId, isToLeftList, fromList, toList)
         local boxName, shifterBoxData = checkAndGetShifterBoxNameAndData(shifterBox)
 d(string.format("[LAM2 dualListBox widget]EVENT_ENTRY_MOVED -  boxName: %q, key: %s, value: %s, categoryId: %s, toLeft: %s", tos(boxName), tos(key),tos(value),tos(categoryId),tos(isToLeftList)))
         if not boxName or not shifterBoxData then return end
@@ -423,7 +426,7 @@ d(string.format("[LAM2 dualListBox widget]EVENT_ENTRY_MOVED -  boxName: %q, key:
     end
 
     --Standard event entry moved callback function for other addons
-    myShifterBoxLocalEventFunctions[LSB.EVENT_ENTRY_MOVED] = function(customFunc, ...)
+    myShifterBoxLocalEventFunctions[entryMovedEventId] = function(customFunc, ...)
         return defaultEventCallbackWrapperFunc(1, customFunc, ...)
     end
 
@@ -520,7 +523,6 @@ local function updateLibShifterBoxEventCallbacks(customControl, dualListBoxData,
     local LAMduallistBox_EventCallbacks = shifterBoxControl.LAMduallistBox_EventCallbacks
 
     --Always register the EVENT_ENTRY_MOVED with the internal callback function
-    local entryMovedEventId = LSB.EVENT_ENTRY_MOVED
     local callbackFuncForEVENT_ENTRY_MOVED = myShifterBoxLocalEventFunctions[widgetName .. "_" .. entryMovedEventId]
     if callbackFuncForEVENT_ENTRY_MOVED ~= nil then
         shifterBoxControl:RegisterCallback(entryMovedEventId, callbackFuncForEVENT_ENTRY_MOVED)
@@ -561,15 +563,19 @@ local function updateLibShifterBoxEventCallbacks(customControl, dualListBoxData,
                         }
                     end
                 else
-                    --EVENT_ENTRY_MOVED already was regitered by default, so if another callback is provided we need to
+                    --EVENT_ENTRY_MOVED already was registered by default to update the SavedVariables properly!
+                    --If another custom same callback is provided by we need to
                     --PostHook our default callback function with that new callback function
                     if callbackFuncForEVENT_ENTRY_MOVED ~= nil then
                         local newEventEntryMovedCallbackFunc = myShifterBoxLocalEventFunctions[entryMovedEventId]
                         if newEventEntryMovedCallbackFunc ~= nil then
                             local origEventEntryMovedCallbackFunc = callbackFuncForEVENT_ENTRY_MOVED
                             callbackFuncForEVENT_ENTRY_MOVED = function(...)
-                                origEventEntryMovedCallbackFunc(...)
-                                newEventEntryMovedCallbackFunc(callbackFuncForEventId, ...)
+                                local retValueOrigEventEntryMovedCallback = origEventEntryMovedCallbackFunc(...)
+                                if retValueOrigEventEntryMovedCallback == nil then retValueOrigEventEntryMovedCallback = true end
+                                local retValueCustomEventEntryMovedCallback = newEventEntryMovedCallbackFunc(callbackFuncForEventId, ...)
+                                if retValueCustomEventEntryMovedCallback == nil then retValueCustomEventEntryMovedCallback = true end
+                                return retValueOrigEventEntryMovedCallback and retValueCustomEventEntryMovedCallback
                             end
                             --Better readability at the control
                             LAMduallistBox_EventCallbacks[entryMovedEventId] = {
