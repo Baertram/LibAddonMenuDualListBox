@@ -205,8 +205,9 @@ end
 
 local getFuncInProgress            = false
 local updateValuesCallFromCreation = false
-local function updateLibShifterBoxEntries(customControl, dualListBoxData, shifterBoxControl, isLeftList, newValues)
-d("[LAM2 dualListBox widget]updateLibShifterBoxEntries - updateValuesCallFromCreation: " ..tos(updateValuesCallFromCreation) ..", isLeftList: " ..tos(isLeftList) .. ", newValues: " ..tos(newValues))
+local function updateLibShifterBoxEntries(customControl, dualListBoxData, shifterBoxControl, isLeftList, newValues, forceReset)
+d("[LAM2 dualListBox widget]updateLibShifterBoxEntries - updateValuesCallFromCreation: " ..tos(updateValuesCallFromCreation) ..", isLeftList: " ..tos(isLeftList) .. ", newValues: " ..tos(newValues).. ", forceReset: " ..tos(forceReset))
+    forceReset = forceReset or false
     local shifterBoxSetupData = dualListBoxData.setupData
     if not checkShifterBoxValid(customControl, shifterBoxSetupData, false) then return end
 
@@ -215,71 +216,81 @@ d("[LAM2 dualListBox widget]updateLibShifterBoxEntries - updateValuesCallFromCre
     shifterBoxSetupData = shifterBoxSetupData or shifterBoxData.shifterBoxSetupData
     if not shifterBoxSetupData then return end
 
-
-    isLeftList = isLeftList or false
     local refreshControlNow = false
+    local noNormalProcessing = false
 
     shifterBoxControl = shifterBoxControl or shifterBoxData.shifterBoxControl
     if not shifterBoxControl then return end
 
     --Force defaults?
     local newValuesAreNil = (newValues == nil and true) or false
-    local forceDefaults = ( (
-                            (updateValuesCallFromCreation == true and newValuesAreNil == true)
-                            or (not updateValuesCallFromCreation and newValuesAreNil == true)
-                            ) and true
-                          ) or false
+    local forceDefaults = ((forceReset == true and true)
+                            or (((updateValuesCallFromCreation == true and newValuesAreNil == true) or (not updateValuesCallFromCreation and newValuesAreNil == true)) and true))
+                            or false
     local leftListEntries, rightListEntries
 
-    --Use default list entries or nothing provided?
+    --Use default list entries or reset
     if forceDefaults == true and (not getFuncInProgress or (getFuncInProgress and updateValuesCallFromCreation)) then
-d(">forcing defaults")
-        if isLeftList == true and dualListBoxData.defaultLeftList ~= nil then
+d(">forcing to defaults")
+        if dualListBoxData.defaultLeftList ~= nil then
             leftListEntries = getDefaultValue(dualListBoxData.defaultLeftList)
-            leftListEntries = leftListEntries or {}
 d(">left list defaults loaded")
-
-        elseif not isLeftList and dualListBoxData.defaultRightList ~= nil then
+        end
+        if dualListBoxData.defaultRightList ~= nil then
             rightListEntries = getDefaultValue(dualListBoxData.defaultRightList)
-            rightListEntries = rightListEntries or {}
 d(">right list defaults loaded")
-
         end
-    else
-        if isLeftList == true then
-            leftListEntries = newValues
-        else
-            rightListEntries = newValues
-        end
-    end
 
-LAM2_DLB = LAM2_DLB or {}
-LAM2_DLB.leftListDefaults = leftListEntries
-LAM2_DLB.rightListDefaults = rightListEntries
-
-    --Update the lists visually now
-    if isLeftList == true then
-        if leftListEntries == nil then
+        --Update the lists visually now
+        if leftListEntries == nil or rightListEntries == nil then
             return
         end
 
+        --First clear both lists so we do not get any duplicate key error from LibShifterBox
+        --because we had moved items from left to right and try to add the same at the left again!
         shifterBoxControl:ClearLeftList()
+        shifterBoxControl:ClearRightList()
+
         shifterBoxControl:AddEntriesToLeftList(leftListEntries)
         dualListBoxData.setFuncLeftList(leftListEntries)
-        refreshControlNow = true
-    else
-        if rightListEntries == nil then
-            return
-        end
-
-        shifterBoxControl:ClearRightList()
         shifterBoxControl:AddEntriesToRightList(rightListEntries)
         dualListBoxData.setFuncRightList(rightListEntries)
         refreshControlNow = true
+        noNormalProcessing = true
     end
-    --Check for empty right list? fill up with default values again
-    --checkAndUpdateRightListDefaultEntries(shifterBoxControl, rightListEntries, shifterBoxData)
+
+    LAM2_DLB = LAM2_DLB or {}
+    LAM2_DLB.leftListDefaults = leftListEntries
+    LAM2_DLB.rightListDefaults = rightListEntries
+
 d(">forceDefaults: " .. tos(forceDefaults) .. ", getFuncInProgress: " .. tos(getFuncInProgress) .. ", refreshControlNow: " .. tos(refreshControlNow))
+    if not noNormalProcessing then
+        --Update the lists visually now
+        if isLeftList == true then
+            leftListEntries = newValues
+            if leftListEntries == nil then
+                return
+            end
+
+            shifterBoxControl:ClearLeftList()
+            shifterBoxControl:AddEntriesToLeftList(leftListEntries)
+            dualListBoxData.setFuncLeftList(leftListEntries)
+            refreshControlNow = true
+        else
+            rightListEntries = newValues
+            if rightListEntries == nil then
+                return
+            end
+
+            shifterBoxControl:ClearRightList()
+            shifterBoxControl:AddEntriesToRightList(rightListEntries)
+            dualListBoxData.setFuncRightList(rightListEntries)
+            refreshControlNow = true
+        end
+
+        --Check for empty right list? fill up with default values again
+        --checkAndUpdateRightListDefaultEntries(shifterBoxControl, rightListEntries, shifterBoxData)
+    end
 
     if refreshControlNow and not getFuncInProgress then
         util.RequestRefreshIfNeeded(customControl)
@@ -308,27 +319,33 @@ d("[LAM2 dualListBox widget]UpdateDisabled - disable: " ..tos(disable))
 end
 
 
-local function UpdateValuesAtList(control, isLeftList, newValues)
-d("[LAM2 dualListBox widget]UpdateValuesAtList - isLeftList: " ..tos(isLeftList) .. ", newValues: " ..tos(newValues))
+local function UpdateValuesAtList(control, isLeftList, newValues, forceReset)
+    forceReset = forceReset or false
+d("[LAM2 dualListBox widget]UpdateValuesAtList - isLeftList: " ..tos(isLeftList) .. ", newValues: " ..tos(newValues) .. ", forceReset: " ..tos(forceReset))
     local shifterBoxControl = control.dualListBox
     if not shifterBoxControl then return false end
 
     local newValuesTable = (newValues ~= nil and getDefaultValue(newValues)) or nil
 
     --customControl, dualListBoxData, shifterBoxControl, isLeftList, newValues
-    updateLibShifterBoxEntries(control, control.data, shifterBoxControl, isLeftList, newValuesTable)
+    updateLibShifterBoxEntries(control, control.data, shifterBoxControl, isLeftList, newValuesTable, forceReset)
 end
 
 
 local function UpdateLeftListValues(control, values)
 d("[LAM2 dualListBox widget]UpdateLeftListValues-values: " ..tos(values))
-    UpdateValuesAtList(control, true, values)
+    UpdateValuesAtList(control, true, values, nil)
 end
 
 
 local function UpdateRightListValues(control, values)
 d("[LAM2 dualListBox widget]UpdateRightListValues-values: " ..tos(values))
-    UpdateValuesAtList(control, false, values)
+    UpdateValuesAtList(control, false, values, nil)
+end
+
+local function ForceReset(control)
+d("[LAM2 dualListBox widget]ForceReset")
+    UpdateValuesAtList(control, nil, nil, true)
 end
 
 --Will be called as the event LibShifterBox.EVENT_ENTRY_MOVED was raised for each moved item
@@ -353,7 +370,7 @@ d("[LAM2 dualListBox widget]UpdateListEntry - isLeft: " ..tos(isToLeftList) .. "
 LAM2_DLB = LAM2_DLB or {}
 LAM2_DLB.rightListSV = valuesRight
 LAM2_DLB.leftListSV = valuesLeft
-            UpdateValuesAtList(control, true, valuesLeft)
+            UpdateValuesAtList(control, true, valuesLeft, nil)
         else
             --Update right list entry
             --Get current entries at right list
@@ -371,7 +388,7 @@ LAM2_DLB.leftListSV = valuesLeft
 LAM2_DLB = LAM2_DLB or {}
 LAM2_DLB.rightListSV = valuesRight
 LAM2_DLB.leftListSV = valuesLeft
-            UpdateValuesAtList(control, false, valuesRight)
+            UpdateValuesAtList(control, false, valuesRight, nil)
         end
     end
 end
@@ -380,8 +397,7 @@ local function UpdateBothLists(control, forceDefault, values)
 d("[LAM2 dualListBox widget]UpdateBothLists - updateValuesCallFromCreation: " .. tos(updateValuesCallFromCreation) ..", forceDefault: " ..tos(forceDefault) .. ", values: " ..tos(values))
     if forceDefault == true then --if we are forcing defaults
 d(">force to defaults")
-        UpdateLeftListValues(control, nil)
-        UpdateRightListValues(control, nil)
+        ForceReset(control)
     elseif values ~= nil then --update the values via the setFuncLeftList and setFuncRightList now and refresh the LAM control afterwards
 d(">set to SV")
         UpdateLeftListValues(control, values)
