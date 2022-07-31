@@ -232,12 +232,15 @@ d("[LAM2 dualListBox widget]updateLibShifterBoxEntries - updateValuesCallFromCre
     --Use default list entries or reset
     if forceDefaults == true and (not getFuncInProgress or (getFuncInProgress and updateValuesCallFromCreation)) then
 d(">forcing to defaults")
+        --Copy the values to a new table so we do not update the defaults table by accident
+        --with non-default values! Else the next call to setFuncLeftList or setFuncRightList will
+        --reference the dfaults tbale to the SV and connect them!
         if dualListBoxData.defaultLeftList ~= nil then
-            leftListEntries = getDefaultValue(dualListBoxData.defaultLeftList)
+            leftListEntries = getDefaultValue(ZO_ShallowTableCopy(dualListBoxData.defaultLeftList))
 d(">left list defaults loaded")
         end
         if dualListBoxData.defaultRightList ~= nil then
-            rightListEntries = getDefaultValue(dualListBoxData.defaultRightList)
+            rightListEntries = getDefaultValue(ZO_ShallowTableCopy(dualListBoxData.defaultRightList))
 d(">right list defaults loaded")
         end
 
@@ -255,13 +258,15 @@ d(">right list defaults loaded")
         dualListBoxData.setFuncLeftList(leftListEntries)
         shifterBoxControl:AddEntriesToRightList(rightListEntries)
         dualListBoxData.setFuncRightList(rightListEntries)
-        refreshControlNow = true
+         --Only refresh if defaults are loaded as the control get's created. Else the refresh will be initiated by the
+        --LAM panel's ForceDefaults function via cm:FireCallbacks("LAM-RefreshPanel", panel) already
+        refreshControlNow = updateValuesCallFromCreation
         noNormalProcessing = true
-    end
 
-    LAM2_DLB = LAM2_DLB or {}
-    LAM2_DLB.leftListDefaults = leftListEntries
-    LAM2_DLB.rightListDefaults = rightListEntries
+        LAM2_DLB = LAM2_DLB or {}
+        LAM2_DLB.leftListDefaults = leftListEntries
+        LAM2_DLB.rightListDefaults = rightListEntries
+    end
 
 d(">forceDefaults: " .. tos(forceDefaults) .. ", getFuncInProgress: " .. tos(getFuncInProgress) .. ", refreshControlNow: " .. tos(refreshControlNow))
     if not noNormalProcessing then
