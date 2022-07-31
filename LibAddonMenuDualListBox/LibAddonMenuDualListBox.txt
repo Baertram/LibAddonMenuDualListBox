@@ -1,4 +1,4 @@
-## APIVersion: 101033 101034
+## APIVersion: 101034 101035
 ## Title: LibAddonMenu-2.0 - Dual list box widget
 ## Version: 1
 ## AddOnVersion: 1

@@ -12,7 +12,7 @@
     setFuncRightList = function(table) db.rightListTable = var doStuff() end -- Saving a table for the right list entries, where table uses a unique number (accross left & right list!) key and a String as value,
     defaultLeftList =  { [1] = "Test", [2] = "Test2" }, --table or function returning a table with the default entries at the left list (optional). Left and right list's keys must be unique in total!
     defaultRightList = { [3] = "Value1", [4] = "Value2" }, --table or function returning a table with the default entries at the right list (optional). Left and right list's keys must be unique in total!
-
+    resetFunc = function(customControl) your code to reset the 2 listBoxes now. customControl.dualListBox provides functions ClearLeftList(), ClearRightList(), AddEntriesToLeftList(listEntries), AddEntriesToRightList(listEntries)  end, (optional)
 --======================================================================================================================
     -- -v- The dual lists setup data                                                                                -v-
 --======================================================================================================================
@@ -772,7 +772,7 @@ function LAMCreateControl.duallistbox(parent, dualListBoxData, controlName)
     if dualListBoxData.setupData == nil then return end
     dualListBoxData.disabled = dualListBoxData.disabled or false
 
-    local control = LAM.util.CreateBaseControl(parent, dualListBoxData, controlName)
+    local control = util.CreateBaseControl(parent, dualListBoxData, controlName)
     local width = control:GetWidth()
     control:SetResizeToFitDescendents(true)
 
@@ -796,8 +796,6 @@ function LAMCreateControl.duallistbox(parent, dualListBoxData, controlName)
     control.dualListBox = dualListBoxControl
     control.dualListBox.dualListBoxData = dualListBoxData
 
-    LAM.util.RegisterForRefreshIfNeeded(control)
-
     --Get functions, w/o updating the SavedVariables (w/o calling the getFuncLeftList or getFuncRightList)
     control.GetLeftListEntries =    getLeftListEntriesFull
     control.GetRightListEntries =   getRightListEntriesFull
@@ -808,8 +806,11 @@ function LAMCreateControl.duallistbox(parent, dualListBoxData, controlName)
     control.UpdateListEntry = UpdateListEntry --Update a single entry at a specified list
 
     --Add the reset function (to set default values) to the widget data table
-    dualListBoxData.resetFunc = function()
-        UpdateBothLists(control, true, nil)
+    local resetFunc = dualListBoxData.resetFunc
+    if resetFunc == nil or resetFunc ~= nil and type(resetFunc) ~= "function" then
+        dualListBoxData.resetFunc = function()
+            UpdateBothLists(control, true, nil)
+        end
     end
 
     --Use the getFuncs to set the values from the SavedVariables of the addon now
@@ -825,6 +826,8 @@ function LAMCreateControl.duallistbox(parent, dualListBoxData, controlName)
     --Disabled state handling
     control.UpdateDisabled =        UpdateDisabled
     control:UpdateDisabled()
+
+    util.RegisterForRefreshIfNeeded(control)
 
     return control --the LAM custom control containing the .dualListBox subTable/control
 end
